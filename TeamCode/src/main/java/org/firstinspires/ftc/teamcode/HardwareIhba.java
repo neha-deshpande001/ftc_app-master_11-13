@@ -61,7 +61,7 @@ import org.opencv.core.Size;
 public class HardwareIhba
 {
 
-    public GoldAlignDetector detector;
+//    public GoldAlignDetector detector;
 
     /* Public OpMode members. */
     public DcMotor  frontLeft   = null;
@@ -70,10 +70,15 @@ public class HardwareIhba
     public DcMotor  backRight   = null;
     public DcMotor  lift        = null;
 
-    public ModernRoboticsI2cRangeSensor range = null;
-    public ModernRoboticsI2cGyro gyro = null;
-    public ModernRoboticsI2cColorSensor colorLeft = null;
-    public ModernRoboticsI2cColorSensor colorRight = null;
+    ModernRoboticsI2cRangeSensor range;
+    ModernRoboticsI2cGyro gyro;
+    ModernRoboticsI2cColorSensor colorLeft;
+    ModernRoboticsI2cColorSensor colorRight;
+
+//    public ModernRoboticsI2cRangeSensor range = null;
+//    public ModernRoboticsI2cGyro gyro = null;
+//    public ModernRoboticsI2cColorSensor colorLeft = null;
+//    public ModernRoboticsI2cColorSensor colorRight = null;
 
 
     public Servo sampling = null;
@@ -139,22 +144,22 @@ public class HardwareIhba
 
 
         // Set up detector
-        detector = new GoldAlignDetector(); // Create detector
-        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
-        detector.useDefaults(); // Set detector to use default settings
-        // Optional tuning
-        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
-        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
-        detector.downscale = 0.4; // How much to downscale the input frames
-
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
-        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-        detector.maxAreaScorer.weight = 0.005; //
-
-        detector.ratioScorer.weight = 5; //
-        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
-
-        detector.enable(); // Start the detector!
+//        detector = new GoldAlignDetector(); // Create detector
+//        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+//        detector.useDefaults(); // Set detector to use default settings
+//        // Optional tuning
+//        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+//        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+//        detector.downscale = 0.4; // How much to downscale the input frames
+//
+//        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+//        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+//        detector.maxAreaScorer.weight = 0.005; //
+//
+//        detector.ratioScorer.weight = 5; //
+//        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+//
+//        detector.enable(); // Start the detector!
     }
  }
 

@@ -104,9 +104,9 @@ public class IhbaTeleop extends LinearOpMode {
                 robot.sampling.setPosition(robot.sampling.getPosition() - CLAW_SPEED);
 
 
-//            if (gamepad1.right_bumper)
+//            if (gamepad1.b)
 //                robot.teamMarker.setPosition(robot.teamMarker.getPosition() + CLAW_SPEED);
-//            else if (gamepad1.left_bumper)
+//            else if (gamepad1.x)
 //                robot.teamMarker.setPosition(robot.teamMarker.getPosition() - CLAW_SPEED);
 
         }

@@ -161,37 +161,37 @@ public class AutoDepot1 extends LinearOpMode {
         }
 
         robot.sampling.setPosition(0); // retracted
-
-        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
-        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
-
-        while (robot.detector.getXPosition() < ALIGNED_CAMERA_PIXEL && opModeIsActive()){
-            robot.frontRight.setPower(DRIVE_SPEED);
-            robot.frontLeft.setPower(-DRIVE_SPEED);
-            robot.backRight.setPower(-DRIVE_SPEED);
-            robot.backLeft.setPower(DRIVE_SPEED);
-            // strafe left
-        }
-        while (robot.detector.getXPosition() > ALIGNED_CAMERA_PIXEL && opModeIsActive()) {
-            robot.frontRight.setPower(-DRIVE_SPEED);
-            robot.frontLeft.setPower(DRIVE_SPEED);
-            robot.backRight.setPower(DRIVE_SPEED);
-            robot.backLeft.setPower(-DRIVE_SPEED);
-            // strafe right
-        }
-        robot.frontRight.setPower(0);
-        robot.frontLeft.setPower(0);
-        robot.backRight.setPower(0);
-        robot.backLeft.setPower(0);
-
-        telemetry.clear();
-        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
-        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
-        // now the center of the camera should be aligned with the middle of the gold mineral
-
-        if(robot.detector.getAligned()) {
-            robot.sampling.setPosition(.5); // outstretched
-        }
+//
+//        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
+//        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
+//
+//        while (robot.detector.getXPosition() < ALIGNED_CAMERA_PIXEL && opModeIsActive()){
+//            robot.frontRight.setPower(DRIVE_SPEED);
+//            robot.frontLeft.setPower(-DRIVE_SPEED);
+//            robot.backRight.setPower(-DRIVE_SPEED);
+//            robot.backLeft.setPower(DRIVE_SPEED);
+//            // strafe left
+//        }
+//        while (robot.detector.getXPosition() > ALIGNED_CAMERA_PIXEL && opModeIsActive()) {
+//            robot.frontRight.setPower(-DRIVE_SPEED);
+//            robot.frontLeft.setPower(DRIVE_SPEED);
+//            robot.backRight.setPower(DRIVE_SPEED);
+//            robot.backLeft.setPower(-DRIVE_SPEED);
+//            // strafe right
+//        }
+//        robot.frontRight.setPower(0);
+//        robot.frontLeft.setPower(0);
+//        robot.backRight.setPower(0);
+//        robot.backLeft.setPower(0);
+//
+//        telemetry.clear();
+//        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
+//        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
+//        // now the center of the camera should be aligned with the middle of the gold mineral
+//
+//        if(robot.detector.getAligned()) {
+//            robot.sampling.setPosition(.5); // outstretched
+//        }
         sleep(1000);
         robot.sampling.setPosition(0);  // retracted
 

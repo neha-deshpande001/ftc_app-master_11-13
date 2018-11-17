@@ -35,8 +35,10 @@ import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IntegratingGyroscope;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.GyroSensor;
@@ -61,7 +63,7 @@ import org.opencv.core.Size;
 public class HardwareIhba
 {
 
-//    public GoldAlignDetector detector;
+    public GoldAlignDetector detector;
 
     /* Public OpMode members. */
     public DcMotor  frontLeft   = null;
@@ -71,9 +73,13 @@ public class HardwareIhba
     public DcMotor  lift        = null;
 
     ModernRoboticsI2cRangeSensor range;
-    ModernRoboticsI2cGyro gyro;
-    ModernRoboticsI2cColorSensor colorLeft;
-    ModernRoboticsI2cColorSensor colorRight;
+    IntegratingGyroscope gyro;
+    ModernRoboticsI2cGyro modernRoboticsI2cGyro;
+    public ModernRoboticsI2cColorSensor colorLeft = null;
+    public ModernRoboticsI2cColorSensor colorRight = null;
+
+    //ColorSensor colorLeft;
+    //ColorSensor colorRight;
 
 //    public ModernRoboticsI2cRangeSensor range = null;
 //    public ModernRoboticsI2cGyro gyro = null;
@@ -108,11 +114,20 @@ public class HardwareIhba
         backRight = hwMap.get(DcMotor.class, "BackRight");
         lift = hwMap.get(DcMotor.class, "Lift");
 
-
         range = hwMap.get(ModernRoboticsI2cRangeSensor.class, "Range");
-        gyro = (ModernRoboticsI2cGyro)hwMap.gyroSensor.get("Gyro");
+//        colorRight = hwMap.get(ColorSensor.class, "ColorRight");
         colorLeft = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorLeft");
         colorRight = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorRight");
+
+        //colorLeft = hwMap.get(ColorSensor.class, "ColorLeft");
+
+        modernRoboticsI2cGyro = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
+        gyro = (IntegratingGyroscope)modernRoboticsI2cGyro;
+
+        //gyro = (ModernRoboticsI2cGyro)hwMap.gyroSensor.get("Gyro");
+        //colorLeft = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorLeft");
+        //colorRight = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorRight");
+
 
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -139,27 +154,27 @@ public class HardwareIhba
         sampling = hwMap.get(Servo.class, "Sampling");
         //       teamMarker = hwMap.get(Servo.class, "teamMarker");
 
-        sampling.setPosition(MID_SERVO);    // These are the values to be tested
+        sampling.setPosition(0);    // These are the values to be tested
         //       teamMarker.setPosition(MID_SERVO);
 
 
         // Set up detector
-//        detector = new GoldAlignDetector(); // Create detector
-//        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
-//        detector.useDefaults(); // Set detector to use default settings
-//        // Optional tuning
-//        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
-//        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
-//        detector.downscale = 0.4; // How much to downscale the input frames
-//
-//        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
-//        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-//        detector.maxAreaScorer.weight = 0.005; //
-//
-//        detector.ratioScorer.weight = 5; //
-//        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
-//
-//        detector.enable(); // Start the detector!
+        detector = new GoldAlignDetector(); // Create detector
+        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+        detector.useDefaults(); // Set detector to use default settings
+        // Optional tuning
+        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        detector.downscale = 0.4; // How much to downscale the input frames
+
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+        detector.maxAreaScorer.weight = 0.005; //
+
+        detector.ratioScorer.weight = 5; //
+        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+
+        detector.enable(); // Start the detector!
     }
  }
 

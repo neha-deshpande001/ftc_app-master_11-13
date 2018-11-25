@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.Range;
 
 /**
  * This OpMode uses the common Pushbot hardware class to define the devices on the robot.
@@ -47,15 +46,17 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Servo Position Finder", group="Neha")
+@TeleOp(name="Ihba Main", group="Neha")
 // @Disabled
-public class RedbotServo extends LinearOpMode {
+public class DoubleController extends LinearOpMode {
 
-    private static double precision = 0.1;
-    private static long delay = 200;
+    final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
 
     /* Declare OpMode members. */
-    HardwareIhba robot = new HardwareIhba();
+    HardwareIhba robot = new HardwareIhba();   // Use a Redbot's hardware
+
+    double target = 0;
+    double SERVO_SPEED = .1;
 
     @Override
     public void runOpMode() {
@@ -64,67 +65,51 @@ public class RedbotServo extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
+        robot.detector.disable();
+        // Send telemetry message to signify robot waiting;
+        telemetry.addData("Say", "\"Guys we won our first competition!\" - Ihba");
+        telemetry.update();
+        // Which idiot wrote the documentation for this code? I have no idea what I'm doing - Ihba
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
         // run until the end of the match (driver presses STOP)
-            while (opModeIsActive()) {
+        while (opModeIsActive()) {
+
+            // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
+
+            // Convert joysticks to desired motion
+            Mecanum.Motion motion = Mecanum.joystickToMotion(
+                    gamepad1.left_stick_x, gamepad1.left_stick_y,
+                    gamepad1.right_stick_x, gamepad1.right_stick_y);
+            // Convert desired motion to wheel powers, with power clamping
+            Mecanum.Wheels wheels = Mecanum.motionToWheels(motion);
+            robot.frontLeft.setPower(wheels.frontLeft);
+            robot.frontRight.setPower(wheels.frontRight);
+            robot.backLeft.setPower(wheels.backLeft);
+            robot.backRight.setPower(wheels.backRight);
 
 
-                if (gamepad1.right_bumper) {    // Pressing this makes it less precise
-                    precision += 0.05;
-                    sleep(1000);
-                }
-                if (gamepad1.left_bumper){      // Pressing this makes it more precise
-                    precision -= 0.05;
-                    sleep(1000);
-                }
-                print();
+            if (!gamepad2.dpad_up && !gamepad2.dpad_down)
+                robot.lift.setPower(0);
+            else if (gamepad2.dpad_down)
+                robot.lift.setPower(-1);
+            else if (gamepad2.dpad_up)
+                robot.lift.setPower(1);
 
 
-                // Pressing Y and dpad_up or dpad_down changes teamMarker's position
-//                while (opModeIsActive() && gamepad1.y) {
-//                    print();
-//                    if (gamepad1.dpad_up) {
-//                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() + precision);
-//                        sleep(delay);
-//                    }
-//                    if (gamepad1.dpad_down) {
-//                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() - precision);
-//                        sleep(delay);
-//                    }
-//                }
-
-                // Pressing A and dpad_up or dpad_down changes sampling's position
-                while (opModeIsActive() && gamepad1.a) {
-                    print();
-                    if (gamepad1.dpad_up) {
-                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() + precision);
-                        sleep(delay);
-                    }
-                    if (gamepad1.dpad_down) {
-                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() - precision);
-                        sleep(delay);
-                    }
-                }
+            if (gamepad2.right_bumper)
+                robot.sampling.setPosition(robot.sampling.getPosition() + CLAW_SPEED);
+            else if (gamepad2.left_bumper)
+                robot.sampling.setPosition(robot.sampling.getPosition() - CLAW_SPEED);
 
 
-                // getPosition() returns the last value where it was COMMANDED to go to, so can't move servo by hand.
-                print();
+            if (gamepad2.b)
+                robot.teamMarker.setPosition(robot.MARKER_EXTENDED);
+            else if (gamepad2.x)
+                robot.teamMarker.setPosition(robot.MARKER_RETRACTED);
 
-
-            }
-    }
-
-    private void print()
-    {
-        telemetry.addData("precision", precision);
-        telemetry.addData("delay", delay);
-        telemetry.addData("a - sampling", robot.teamMarker.getPosition());
-      //  telemetry.addData("y - teamMarker", robot.teamMarker.getPosition());
-        // Add more telemetry here if more servos are needed.
-
-        telemetry.update();
+        }
     }
 }

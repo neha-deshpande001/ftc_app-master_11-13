@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
@@ -43,6 +44,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import org.opencv.core.Size;
+import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+
 
 /**
  * This is NOT an opmode.
@@ -63,7 +67,10 @@ import org.opencv.core.Size;
 public class HardwareIhba
 {
 
-    public GoldAlignDetector detector;
+    static final double MARKER_RETRACTED = 0.45;
+    static final double MARKER_EXTENDED = 0.9;
+
+    public SamplingOrderDetector detector;
 
     /* Public OpMode members. */
     public DcMotor  frontLeft   = null;
@@ -72,23 +79,17 @@ public class HardwareIhba
     public DcMotor  backRight   = null;
     public DcMotor  lift        = null;
 
-    ModernRoboticsI2cRangeSensor range;
+    //ModernRoboticsI2cRangeSensor range;
     IntegratingGyroscope gyro;
     ModernRoboticsI2cGyro modernRoboticsI2cGyro;
-    public ModernRoboticsI2cColorSensor colorLeft = null;
-    public ModernRoboticsI2cColorSensor colorRight = null;
 
-    //ColorSensor colorLeft;
-    //ColorSensor colorRight;
-
-//    public ModernRoboticsI2cRangeSensor range = null;
-//    public ModernRoboticsI2cGyro gyro = null;
-//    public ModernRoboticsI2cColorSensor colorLeft = null;
-//    public ModernRoboticsI2cColorSensor colorRight = null;
+    IntegratingGyroscope gyro2;
+    ModernRoboticsI2cGyro modernRoboticsI2cGyro2;
+    //public DigitalChannel digitalTouch;
 
 
     public Servo sampling = null;
-//    public Servo teamMarker = null;
+    public Servo teamMarker = null;
 
 //      rjberry@rjcontrol.com
 
@@ -114,19 +115,14 @@ public class HardwareIhba
         backRight = hwMap.get(DcMotor.class, "BackRight");
         lift = hwMap.get(DcMotor.class, "Lift");
 
-        range = hwMap.get(ModernRoboticsI2cRangeSensor.class, "Range");
-//        colorRight = hwMap.get(ColorSensor.class, "ColorRight");
-        colorLeft = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorLeft");
-        colorRight = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorRight");
-
-        //colorLeft = hwMap.get(ColorSensor.class, "ColorLeft");
 
         modernRoboticsI2cGyro = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
         gyro = (IntegratingGyroscope)modernRoboticsI2cGyro;
+        modernRoboticsI2cGyro2 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro2");
+        gyro2 = (IntegratingGyroscope)modernRoboticsI2cGyro;
 
-        //gyro = (ModernRoboticsI2cGyro)hwMap.gyroSensor.get("Gyro");
-        //colorLeft = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorLeft");
-        //colorRight = hwMap.get(ModernRoboticsI2cColorSensor.class, "ColorRight");
+//        digitalTouch = hwMap.get(DigitalChannel.class, "MagneticSensor"); // configure as REV Touch Sensor
+//        //digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
 
 
@@ -144,37 +140,77 @@ public class HardwareIhba
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Define and initialize ALL installed servos.
         sampling = hwMap.get(Servo.class, "Sampling");
-        //       teamMarker = hwMap.get(Servo.class, "teamMarker");
+        teamMarker = hwMap.get(Servo.class, "TeamMarker");
 
         sampling.setPosition(0);    // These are the values to be tested
-        //       teamMarker.setPosition(MID_SERVO);
+        teamMarker.setPosition(MARKER_RETRACTED);
 
 
         // Set up detector
-        detector = new GoldAlignDetector(); // Create detector
-        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+        detector = new SamplingOrderDetector(); // Create the detector
+        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize detector with app context and camera
         detector.useDefaults(); // Set detector to use default settings
-        // Optional tuning
-        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
-        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+
         detector.downscale = 0.4; // How much to downscale the input frames
 
+        // Optional tuning
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
         //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-        detector.maxAreaScorer.weight = 0.005; //
+        detector.maxAreaScorer.weight = 0.001;
 
-        detector.ratioScorer.weight = 5; //
-        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+        detector.ratioScorer.weight = 15;
+        detector.ratioScorer.perfectRatio = 1.0;
 
-        detector.enable(); // Start the detector!
+        detector.enable(); // Start detector
+
+
+
+//        // Set up detector
+//        detector = new GoldAlignDetector(); // Create detector
+//        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+//        detector.useDefaults(); // Set detector to use default settings
+//        // Optional tuning
+//        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+//        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+//        detector.downscale = 0.4; // How much to downscale the input frames
+//
+//        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+//        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+//        detector.maxAreaScorer.weight = 0.005; //
+//
+//        detector.ratioScorer.weight = 5; //
+//        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+//
+//        detector.enable(); // Start the detector!
     }
  }
 
+ /* stuff to do in order of importance
+
+ - take pictures of gyro angular velocity telemetry and gyro straight correction for notebook
+ - test ConceptRampMotorSpeed (just make sure it works)
+ - fix gyro straight/turn coefficients (make it smoother) (depending on time)
+ - test touch sensor (depending on time)
+
+ - phone angle for SamplingOrderDetector
+ - encoder unlatching
+ - accurate mineral alignment maybe using GoldAlignDetector?
+ - team marker. either a physical mechanism or robot has to actually go around?
+ - touching crater (using Vuforia??)
+
+ - all the above for the Crater side
+
+ - limit switch (which is programmed just like a REV touch sensor (SensorDigitalTouch))
+ - gyro strafe
+ - switch front and back maybe
+ - lerp / accelerate motors when starting motion
+
+*/

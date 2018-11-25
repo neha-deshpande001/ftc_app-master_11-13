@@ -65,10 +65,11 @@ public class IhbaTeleop extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
-
+        robot.detector.disable();
         // Send telemetry message to signify robot waiting;
-        telemetry.addData("Say", "Hello 2018-19 Redbots!\nCan you take off the plexiglass panels again?");
+        telemetry.addData("Say", "\"Guys we won our first competition!\" - Ihba");
         telemetry.update();
+        // Which idiot wrote the documentation for this code? I have no idea what I'm doing - Ihba
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -104,10 +105,10 @@ public class IhbaTeleop extends LinearOpMode {
                 robot.sampling.setPosition(robot.sampling.getPosition() - CLAW_SPEED);
 
 
-//            if (gamepad1.b)
-//                robot.teamMarker.setPosition(robot.teamMarker.getPosition() + CLAW_SPEED);
-//            else if (gamepad1.x)
-//                robot.teamMarker.setPosition(robot.teamMarker.getPosition() - CLAW_SPEED);
+            if (gamepad1.b)
+                robot.teamMarker.setPosition(robot.MARKER_EXTENDED);
+            else if (gamepad1.x)
+                robot.teamMarker.setPosition(robot.MARKER_RETRACTED);
 
         }
     }

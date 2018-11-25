@@ -47,11 +47,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@Autonomous(name = "Concept: Ramp Motor Speed", group = "Concept")
-@Disabled
+@Autonomous(name = "Edited: Concept: Ramp Motor Speed", group = "Concept")
+// @Disabled
 public class ConceptRampMotorSpeed extends LinearOpMode {
 
-    HardwareRedbot robot = new HardwareRedbot();
+    HardwareIhba robot = new HardwareIhba();
 
     static final double INCREMENT   = 0.01;     // amount to ramp motor each CYCLE_MS cycle
     static final int    CYCLE_MS    =   50;     // period of each cycle
@@ -94,7 +94,7 @@ public class ConceptRampMotorSpeed extends LinearOpMode {
     }
 
     public void move(double powerL, double powerR, long milliseconds) {
-        long distance = milliseconds * 1; //replace 1 with some valueInInches
+        long distance = milliseconds * 5; // valueInInches = 5
         turnMotorsOn(powerL, powerR);
         sleep(distance);
         turnMotorsOn(0,0);
@@ -113,32 +113,53 @@ public class ConceptRampMotorSpeed extends LinearOpMode {
 
 
         while(opModeIsActive()) {
-                robot.dim.setLED(robot.BLUE_LED, false);
-                robot.dim.setLED(robot.RED_LED, false);
+            telemetry.addData(">", "Starting");
+            telemetry.update();
 
             // accelerates to full speed
             accelerate(1);
-                robot.dim.setLED(robot.BLUE_LED, true);
-                robot.dim.setLED(robot.RED_LED, false);
+            telemetry.addData(">", "Accelerating");
+            telemetry.update();
 
             // goes forward for 1 second
-            move(power,power,1000);
-                robot.dim.setLED(robot.BLUE_LED, true);
-                robot.dim.setLED(robot.RED_LED, true);
+            move(power, power, 1000);
+            telemetry.addData(">", "Forward");
+            telemetry.update();
 
             // decelerates to a stop
             decelerate(0);
-                robot.dim.setLED(robot.BLUE_LED, false);
-                robot.dim.setLED(robot.RED_LED, true);
+            telemetry.addData(">", "Decelerating");
+            telemetry.update();
 
             // Turn off motors
-            turnMotorsOn(0,0);
-                robot.dim.setLED(robot.BLUE_LED, false);
-                robot.dim.setLED(robot.RED_LED, false);
+            turnMotorsOn(0, 0);
+            telemetry.addData(">", "Stopped");
+            telemetry.update();
 
 
-            telemetry.addData(">", "Done");
+            // start going backwards
+            // accelerates to full speed
+            decelerate(-1);
+            telemetry.addData(">", "Accelerating (decelerating) backwards");
+            telemetry.update();
+
+            // goes forward for 1 second
+            move(-power, -power, 1000);
+            telemetry.addData(">", "Backwards");
+            telemetry.update();
+
+            // decelerates to a stop
+            accelerate(0);
+            telemetry.addData(">", "Decelerating (accelerating) backwards");
+            telemetry.update();
+
+            // Turn off motors
+            turnMotorsOn(0, 0);
+            telemetry.addData(">", "Stopped");
             telemetry.update();
         }
+
+        telemetry.addData(">", "Done");
+        telemetry.update();
     }
 }

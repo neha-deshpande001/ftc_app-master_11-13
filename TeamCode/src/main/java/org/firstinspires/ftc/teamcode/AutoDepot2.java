@@ -29,17 +29,17 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.disnodeteam.dogecv.DrawViewSource;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 /**
  * This file illustrates the concept of driving a path based on Gyro heading and encoder counts.
@@ -74,9 +74,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Depot 1", group="Neha")
+@Autonomous(name="Ideally the Better Depot Program", group="Neha")
 // @Disabled
-public class AutoDepot1 extends LinearOpMode {
+public class AutoDepot2 extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareIhba robot = new HardwareIhba();   // Use a Pushbot's hardware
@@ -90,21 +90,24 @@ public class AutoDepot1 extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     SLOW_DRIVE_SPEED        = 0.3;
     static final double     DRIVE_SPEED             = 0.4;
     static final double     TURN_SPEED              = 0.3;
-    static final double     LIFT_SPEED              = 0.5;
-    static final double     STRAFE_SPEED            = 0.3;
+    static final double     SLOW_STRAFE_SPEED       = 0.3;
+    static final double     STRAFE_SPEED            = 0.5;
 
 
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
-    static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
-    static final double ALIGNED_CAMERA_PIXEL = 600;      // Pixel that is at the center of the x-axis of the camera
+    static final double P_DRIVE_COEFF = 0.05;     // Larger is more responsive, but also less stable
+
+    static final double MARKER_RETRACTED = 0.45;
+    static final double MARKER_EXTENDED = 0.9;
 
     double color_num = 3; // 3 = blue, 10 = red
     double current_distance_from_wall = -1;
     double currentAngle = 0;
+
+    String goldlocation = "UNKNOWN";
 
     @Override
     public void runOpMode() {
@@ -114,80 +117,115 @@ public class AutoDepot1 extends LinearOpMode {
          * The init() method of the hardware class does most of the work here
          */
         robot.init(hardwareMap);
-
-
-        telemetry.addData(">", "color_num = ", color_num);
-        telemetry.update();
+        //robot.detector.enable();
 
         // Ensure the robot is stationary, then reset the encoders and calibrate the gyro.
         robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Send telemetry message to alert driver that we are calibrating;
         telemetry.addData(">", "Calibrating Gyro");    //
         telemetry.update();
 
         robot.modernRoboticsI2cGyro.calibrate();
+        robot.modernRoboticsI2cGyro2.calibrate();
 
         // make sure the gyro is calibrated before continuing
         while (!isStopRequested() && robot.modernRoboticsI2cGyro.isCalibrating()) {
             sleep(50);
             idle();
         }
+        while (!isStopRequested() && robot.modernRoboticsI2cGyro2.isCalibrating()) {
+            sleep(50);
+            idle();
+        }
 
-        telemetry.addData(">", "Robot Ready.");    //
+        telemetry.addData(">", "Robot Ready.");
         telemetry.update();
 
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Wait for the game to start (Display Gyro value), and reset gyro before we move.
-        while (!isStarted()) {
+        while (!isStarted() && !isStopRequested()) {
             telemetry.addData(">", "Robot Heading = %d", robot.modernRoboticsI2cGyro.getIntegratedZValue());
             telemetry.update();
+            telemetry.addData(">", "Robot Heading 2 = %d", robot.modernRoboticsI2cGyro2.getIntegratedZValue());
+            telemetry.update();
+            //goldlocation = robot.detector.getCurrentOrder().toString();    // scan minerals
+            goldlocation = robot.detector.getLastOrder().toString();
+            telemetry.addData("Mineral is on the robot's ", goldlocation);
+            telemetry.update();
+
         }
 
         robot.modernRoboticsI2cGyro.resetZAxisIntegrator();
+        robot.modernRoboticsI2cGyro2.resetZAxisIntegrator();
+
 
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
 
 
+        // LEFT MEANS THE ROBOT'S LEFT
 
-        // unlatch
-        robot.lift.setPower(LIFT_SPEED);
+        unlatch();
+
+        robot.detector.disable();
+
+        if (goldlocation.equals("LEFT")){
+            telemetry.addData("Going: ", "LEFT");
+            telemetry.update();
+            leftMineral();
+        }
+        else if (goldlocation.equals("CENTER")){
+            telemetry.addData("Going: ", "CENTER");
+            telemetry.update();
+            centerMineral();
+        }
+        else {//(goldlocation.equals("RIGHT")){
+            telemetry.addData("Going: ", "RIGHT or UNKNOWN");
+            telemetry.update();
+            rightMineral();
+        }
+
+
+        telemetry.addData("Path", "Complete");
+        telemetry.update();
+    }
+
+    public void unlatch(){
+
+        double revolutions = 8.5;   // rotations that the lift should move down
+        // timeoutS means that it will def stop in that amount of time, even if the encoders stop working
+        double timeoutS = 3.6;  // amount of seconds that it takes to lower lift
+        int newLiftTarget = robot.lift.getCurrentPosition() + (int)(revolutions * COUNTS_PER_MOTOR_REV);
+
+        robot.lift.setTargetPosition(newLiftTarget);
+        robot.lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.lift.setPower(1);
         runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < 5.9)) {
-            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
+        while (opModeIsActive() && (runtime.seconds() < timeoutS) && robot.lift.isBusy()) {
+            // Display it for the driver.
+            telemetry.addData("Path1",  "Running to %7d", newLiftTarget);
+            telemetry.addData("Path2",  "Running at %7d", robot.lift.getCurrentPosition());
             telemetry.update();
         }
-        robot.lift.setPower(0);
 
-        sleep(500);
+        robot.lift.setPower(0); // stop motor
+        robot.lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // turn right
-        robot.frontLeft.setPower(-0.05);
-        robot.frontRight.setPower(0.1);
-        robot.backLeft.setPower(-0.05);
-        robot.backRight.setPower(0.1);
-        runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < 1.2)) {
-            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
-            telemetry.update();
-        }
-        robot.frontLeft.setPower(0);
-        robot.frontRight.setPower(0);
-        robot.backLeft.setPower(0);
-        robot.backRight.setPower(0);
+        gyroTurn(0.3, 10);
+        gyroHold(0.3,10,0.5);
+        currentAngle = 10;
 
-        sleep(500);
-
-        // move right
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -199,7 +237,7 @@ public class AutoDepot1 extends LinearOpMode {
         robot.backRight.setPower(STRAFE_SPEED);
 
         runtime.reset();
-        while (opModeIsActive() && (runtime.seconds() < 1.3)) {
+        while (opModeIsActive() && (runtime.seconds() < 1.5)) {
             telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
             telemetry.update();
         }
@@ -208,193 +246,176 @@ public class AutoDepot1 extends LinearOpMode {
         robot.backLeft.setPower(0);
         robot.backRight.setPower(0);
 
-        sleep(250);
-
-        // more forward
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        gyroDrive(DRIVE_SPEED, 6, 0);
+        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250);
+
+
+        gyroDrive(DRIVE_SPEED,7, currentAngle);
+    }
+
+    public void leftMineral(){
+
+        // align with mineral
+        encoderStrafeLeft(STRAFE_SPEED, 2.5, 4);
+        sleep(100);
+
+        //knock off mineral
+        gyroDrive(DRIVE_SPEED,35, currentAngle);
+
+        //turn -45 degrees
+        currentAngle = -45;
+        gyroTurn(TURN_SPEED,currentAngle);
+        gyroHold(TURN_SPEED,currentAngle, 0.5);
+
+        // move forward
+        gyroDrive(DRIVE_SPEED, 18, currentAngle);
+
+        // turn 180 degrees
+        currentAngle = 45;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle, 0.5);
+
+        //remove marker
+        removeMarker();
+
+        // turn, facing crater
+        currentAngle = 135;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle, 0.5);
+
+        // move to crater
+        gyroDrive(1,96, currentAngle - 5);
+
+    }
+
+    public void centerMineral(){
+
+        // align with mineral (might also need to strafe?) (or, maybe make the angle towards the left (more positive))
+        encoderStrafeLeft(STRAFE_SPEED,1.2, 2);
+        sleep(100);
+
+        // knock off mineral
+        gyroDrive(DRIVE_SPEED, 35, currentAngle);
+
+        // turn 45 degrees
+        currentAngle = 67;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle, 0.5);
 
         sleep(250);
 
-        gyroTurn(TURN_SPEED, -25);
-        gyroHold(TURN_SPEED,-25,2);
-        currentAngle = -25;
+        // remove marker
+        removeMarker();
+
+        // turn 45 degrees, facing crater
+        currentAngle = 135;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle, 0.5);
         sleep(250);
 
-//        if (!robot.detector.getAligned()){
-//            gyroTurn(TURN_SPEED, -15);
-//            gyroHold(TURN_SPEED,-15,2);
-//            currentAngle = -15;
-//        }
-//        sleep(250);
+        // move to crater
+        gyroDrive(1,96, currentAngle - 5);
 
-        // go left until mineral is aligned
+    }
+
+    public void rightMineral(){
+
+        // align with mineral
+        currentAngle = -20;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle,0.5);
+        sleep(100);
+
+        // knock off mineral
+        gyroDrive(DRIVE_SPEED, 27, currentAngle);
+
+        // turn left
+        currentAngle = 45;
+        gyroTurn(TURN_SPEED,currentAngle);
+        gyroHold(TURN_SPEED,currentAngle,0.5);
+
+        // move to depot
+        gyroDrive(DRIVE_SPEED, 30, currentAngle);
+
+        // turn left 45 degrees
+        currentAngle = 90;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED,currentAngle,0.5);
+
+        // team marker
+        removeMarker();
+
+        // turn 45 degrees, now facing crater
+        currentAngle = 135;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED,currentAngle,0.5);
+        sleep(250);
+
+
+        // is this necessary??
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        robot.frontRight.setPower(0.3);
-        robot.frontLeft.setPower(-0.3);
-        robot.backRight.setPower(-0.3);
-        robot.backLeft.setPower(0.3);
+        // move to crater
+        gyroDrive(1,96, currentAngle - 5);
 
-//        while(!robot.detector.getAligned() && opModeIsActive()){
-//            telemetry.addData(">", "The robot is aligning with the mineral", runtime.seconds());
-//            telemetry.update();
-//        }
+    }
 
-        telemetry.addData(">", "The mineral has been found!");
-        robot.frontRight.setPower(0);
+
+
+    public void encoderStrafeLeft(double speed, double revolutions, double timeoutS){
+
+        int newFrontLeftTarget = robot.frontLeft.getCurrentPosition() - (int)(revolutions * COUNTS_PER_MOTOR_REV);
+        int newBackLeftTarget = robot.backLeft.getCurrentPosition() + (int)(revolutions * COUNTS_PER_MOTOR_REV);
+
+        robot.frontLeft.setTargetPosition(newFrontLeftTarget);
+        robot.frontRight.setTargetPosition(newBackLeftTarget);
+        robot.backLeft.setTargetPosition(newBackLeftTarget);
+        robot.backRight.setTargetPosition(newFrontLeftTarget);
+
+        robot.frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        robot.frontLeft.setPower(-speed);
+        robot.frontRight.setPower(speed);
+        robot.backLeft.setPower(speed);
+        robot.backRight.setPower(-speed);
+
+        runtime.reset();
+        while (opModeIsActive() && (runtime.seconds() < timeoutS) && robot.frontLeft.isBusy() && robot.frontRight.isBusy()
+                && robot.backLeft.isBusy() && robot.backRight.isBusy()) {
+            // Display it for the driver.
+            telemetry.addData("Path1",  "Running to %7d", newFrontLeftTarget);
+            telemetry.addData("Path2",  "Running at %7d", robot.frontLeft.getCurrentPosition());
+            telemetry.update();
+        }
+
         robot.frontLeft.setPower(0);
-        robot.backRight.setPower(0);
+        robot.frontRight.setPower(0);
         robot.backLeft.setPower(0);
-
-        robot.detector.disable();
-
-        robot.sampling.setPosition(0.8);
+        robot.backRight.setPower(0);
 
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        gyroDrive(1,25, currentAngle);
-
-        sleep(250);
-
-        gyroDrive(0.5,-28, currentAngle);
-
-        robot.sampling.setPosition(0);
-
-        sleep(250);
-
-        gyroTurn(0.5,10);
-        //gyroHold(0.5,10,1);
-        sleep(100);
-        gyroTurn(0.5,95);
-        //gyroHold(0.5,95,1);
-        sleep(250);
-
-        currentAngle = 95;
-
-        robot.sampling.setPosition(0.5);
-
-        sleep(250);
-
-        gyroDrive(1,60,95);
-
-
-
-//        robot.colorLeft.enableLed(true); // LED on because trying to sense an actual object, not a light
-//        robot.colorRight.enableLed(true);
-
-//        if (color_num != -1) {
-//            findLine();
-//            lineSquare();
-//        }
-
-//        robot.sampling.setPosition(0); // retracted
-//
-//        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
-//        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
-//
-//        while (robot.detector.getXPosition() < ALIGNED_CAMERA_PIXEL && opModeIsActive()){
-//            robot.frontRight.setPower(DRIVE_SPEED);
-//            robot.frontLeft.setPower(-DRIVE_SPEED);
-//            robot.backRight.setPower(-DRIVE_SPEED);
-//            robot.backLeft.setPower(DRIVE_SPEED);
-//            // strafe left
-//        }
-//        while (robot.detector.getXPosition() > ALIGNED_CAMERA_PIXEL && opModeIsActive()) {
-//            robot.frontRight.setPower(-DRIVE_SPEED);
-//            robot.frontLeft.setPower(DRIVE_SPEED);
-//            robot.backRight.setPower(DRIVE_SPEED);
-//            robot.backLeft.setPower(-DRIVE_SPEED);
-//            // strafe right
-//        }
-//        robot.frontRight.setPower(0);
-//        robot.frontLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//
-//        telemetry.clear();
-//        telemetry.addData("IsAligned" , robot.detector.getAligned()); // Is the bot aligned with the gold mineral?
-//        telemetry.addData("X Pos" , robot.detector.getXPosition()); // Gold X position.
-//        // now the center of the camera should be aligned with the middle of the gold mineral
-//
-//        if(robot.detector.getAligned()) {
-//            robot.sampling.setPosition(.5); // outstretched
-//        }
-
-//        sleep(1000);
-//        robot.sampling.setPosition(0);  // retracted
-//
-//        gyroTurn(TURN_SPEED, 90);
-//        gyroHold(TURN_SPEED, 90, 2);
-//
-//// maybe use vuforia here instead of distance sensor?
-//        current_distance_from_wall = robot.range.getDistance(DistanceUnit.INCH);
-//
-//        gyroDrive(DRIVE_SPEED, current_distance_from_wall - 9, 90);
-//
-//        gyroTurn(TURN_SPEED, -45);
-//        gyroHold(TURN_SPEED, -45, 2);
-//// find better default for this
-//
-//        while(robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num)    // what if color_num is 0?? Think of a default way to do this
-//        {
-//            robot.frontLeft.setPower(DRIVE_SPEED);
-//            robot.frontRight.setPower(DRIVE_SPEED);
-//            robot.backLeft.setPower(DRIVE_SPEED);
-//            robot.backRight.setPower(DRIVE_SPEED);
-//        }
-
-//        if (color_num != -1) {
-//            findLine();
-//            lineSquare();
-//        }
-
-        // release team marker
-
- //       gyroDrive(DRIVE_SPEED, -120, -45); // Adjust distance based on if the robot is able to go over the crater or not
-
-
-//        gyroDrive(DRIVE_SPEED, 15,0);
-//
-//
-//
-//        if(robot.color.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == 9) {
-//            robot.sampling.setPosition(1);
-//        }
-//        else{
-//            //strafe right 17 inches
-//        }
-//
-//        if(robot.color.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == 9) {
-//            //move arm
-//        }
-//        else{
-//            //strafe 17 * 2 inches
-//        }
-//
-//        if(robot.color.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == 9) {
-//            //move arm
-//        }
-//
-//        // check all of this stuff above
-
-
-//        gyroTurn(TURN_SPEED, 90);
-//        gyroHold(TURN_SPEED,90, 1);
-
-
-        telemetry.addData("Path", "Complete");
-        telemetry.update();
+        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    public void removeMarker(){
+        for(int i = 0; i < 3; i++) {
+            robot.teamMarker.setPosition(MARKER_EXTENDED);
+            sleep(250);
+            robot.teamMarker.setPosition(MARKER_RETRACTED);
+            sleep(250);
+        }
+    }
 
     /**
      * Method to drive on a fixed compass bearing (angle), based on encoder counts.
@@ -605,8 +626,18 @@ public class AutoDepot1 extends LinearOpMode {
 
         double robotError;
 
-        // calculate error in -179 to +180 range  (
-        robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+        AngularVelocity rates = robot.gyro.getAngularVelocity(AngleUnit.DEGREES);
+
+        if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
+            robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+            telemetry.addData(">","first gyro");
+            telemetry.update();
+        }
+        else{
+            robotError = targetAngle - robot.modernRoboticsI2cGyro2.getIntegratedZValue();
+            telemetry.addData(">","backup");
+            telemetry.update();
+        }
         while (robotError > 180) robotError -= 360;
         while (robotError <= -180) robotError += 360;
         return robotError;
@@ -623,67 +654,7 @@ public class AutoDepot1 extends LinearOpMode {
         return Range.clip(error * PCoeff, -1, 1);
     }
 
-
-//    public void findLine(){
-//
-//        while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num){
-//            robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//            robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.frontRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//
-//        while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//            robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.backLeft.setPower(0);
-//
-//        while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//            robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//            robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontRight.setPower(0);
-//        robot.backRight.setPower(0);
-//
-//    }
-//
-//    public void lineSquare(){
-//        for (int i = 0; i < 2; i++) {
-//            while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == color_num) {
-//                robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//                robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontRight.setPower(0);
-//            robot.backRight.setPower(0);
-//
-//            while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//                robot.frontRight.setPower(-SLOW_DRIVE_SPEED);
-//                robot.backRight.setPower(-SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontRight.setPower(0);
-//            robot.backRight.setPower(0);
-//
-//
-//            while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == color_num) {
-//                robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//                robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontLeft.setPower(0);
-//            robot.backLeft.setPower(0);
-//
-//            while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//                robot.frontLeft.setPower(-SLOW_DRIVE_SPEED);
-//                robot.backLeft.setPower(-SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontLeft.setPower(0);
-//            robot.backLeft.setPower(0);
-//
-//        }
-//    }
+    String formatRate(float rate) {
+        return String.format("%.3f", rate);
+    }
 }

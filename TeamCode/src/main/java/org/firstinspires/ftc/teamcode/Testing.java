@@ -29,15 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
-
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -75,33 +71,31 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Ideally the Better Depot Program", group="Neha")
+@Autonomous(name="testing", group="Neha")
 // @Disabled
-public class AutoDepot2 extends LinearOpMode {
+public class Testing extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareIhba robot = new HardwareIhba();   // Use a Pushbot's hardware
     private ElapsedTime     runtime = new ElapsedTime();
 
-
-
     static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
-    static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
+    static final double DRIVE_GEAR_REDUCTION = 2.0;     // This is < 1.0 if geared UP
     static final double WHEEL_DIAMETER_INCHES = 4.0;         // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.4;
-    static final double     TURN_SPEED              = 0.3;
-    static final double     SLOW_STRAFE_SPEED       = 0.3;
-    static final double     STRAFE_SPEED            = 0.5;
+    static final double     DRIVE_SPEED             = 0.1;
+    static final double     TURN_SPEED              = 0.1;
+    static final double     SLOW_STRAFE_SPEED       = 0.1;
+    static final double     STRAFE_SPEED            = 0.1;
 
 
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
-    static final double P_DRIVE_COEFF = 0.05;     // Larger is more responsive, but also less stable
+    static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
 
     static final double MARKER_RETRACTED = 0.45;
     static final double MARKER_EXTENDED = 0.9;
@@ -120,7 +114,7 @@ public class AutoDepot2 extends LinearOpMode {
          * The init() method of the hardware class does most of the work here
          */
         robot.init(hardwareMap);
-        //robot.detector.enable();
+        robot.samplingDetector.disable();
 
         // Ensure the robot is stationary, then reset the encoders and calibrate the gyro.
         robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -133,19 +127,6 @@ public class AutoDepot2 extends LinearOpMode {
         telemetry.addData(">", "Calibrating Gyro");    //
         telemetry.update();
 
-        robot.modernRoboticsI2cGyro.calibrate();
-        robot.modernRoboticsI2cGyro2.calibrate();
-
-        // make sure the gyro is calibrated before continuing
-        while (!isStopRequested() && robot.modernRoboticsI2cGyro.isCalibrating()) {
-            sleep(50);
-            idle();
-        }
-        while (!isStopRequested() && robot.modernRoboticsI2cGyro2.isCalibrating()) {
-            sleep(50);
-            idle();
-        }
-
         telemetry.addData(">", "Robot Ready.");
         telemetry.update();
 
@@ -157,18 +138,12 @@ public class AutoDepot2 extends LinearOpMode {
 
         // Wait for the game to start (Display Gyro value), and reset gyro before we move.
         while (!isStarted() && !isStopRequested()) {
-            telemetry.addData(">", "Robot Heading = %d", robot.modernRoboticsI2cGyro.getIntegratedZValue());
-            telemetry.update();
-            telemetry.addData(">", "Robot Heading 2 = %d", robot.modernRoboticsI2cGyro2.getIntegratedZValue());
-            telemetry.update();
-            //goldlocation = robot.detector.getCurrentOrder().toString();    // scan minerals
-            goldlocation = robot.samplingDetector.getLastOrder().toString();
-            telemetry.addData("Mineral is on the robot's ", goldlocation);
-            telemetry.update();
+
+
         }
 
-        robot.modernRoboticsI2cGyro.resetZAxisIntegrator();
-        robot.modernRoboticsI2cGyro2.resetZAxisIntegrator();
+        //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+        gyroDrive(0.05,-5,0);
 
 
         // Step through each leg of the path,
@@ -178,59 +153,70 @@ public class AutoDepot2 extends LinearOpMode {
 
         // LEFT MEANS THE ROBOT'S LEFT
 
-        unlatch();
 
-        robot.samplingDetector.disable();
-
-
-        if (goldlocation.equals("LEFT")){
-            telemetry.addData("Going: ", "LEFT");
-            telemetry.update();
-            //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.ORANGE);
-            leftMineral();
-        }
-        else if (goldlocation.equals("CENTER")){
-            telemetry.addData("Going: ", "CENTER");
-            telemetry.update();
-            //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
-            centerMineral();
-        }
-        else { //(goldlocation.equals("RIGHT")){
-            telemetry.addData("Going: ", "RIGHT or UNKNOWN");
-            telemetry.update();
-//            if (goldlocation.equals("RIGHT"))
-//                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_VIOLET);
-//            else
-//                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_RED);
-            rightMineral();
-        }
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
     }
 
     public void unlatch() throws InterruptedException{
-        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
+        while (opModeIsActive() && robot.magneticLimitSwitch.getState()) // move until false or until x is pressed
+            robot.lift.setPower(1);
 
-        for (int i = 0; i < 3; i++) {
-            while (opModeIsActive() && robot.magneticLimitSwitch.getState()) // move until false
-                robot.lift.setPower(1);
-            while (opModeIsActive() && !robot.magneticLimitSwitch.getState()) // move until true
-                robot.lift.setPower(1);
+        while (opModeIsActive() && !robot.magneticLimitSwitch.getState()) // move until true or until x is pressed
+            robot.lift.setPower(1);
+//        double revolutions = 8.6;   // rotations that the lift should move down
+//        // timeoutS means that it will def stop in that amount of time, even if the encoders stop working
+//        double timeoutS = 3.7;  // amount of seconds that it takes to lower lift
+//        int newLiftTarget = robot.lift.getCurrentPosition() + (int)(revolutions * COUNTS_PER_MOTOR_REV);
+//
+//        robot.lift.setTargetPosition(newLiftTarget);
+//        robot.lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        robot.lift.setPower(1);
+//        runtime.reset();
+//        while (opModeIsActive() && (runtime.seconds() < timeoutS) && robot.lift.isBusy()) {
+//            // Display it for the driver.
+//            telemetry.addData("Path1",  "Running to %7d", newLiftTarget);
+//            telemetry.addData("Path2",  "Running at %7d", robot.lift.getCurrentPosition());
+//            telemetry.update();
+//        }
+
+        robot.lift.setPower(0); // stop motor
+        robot.lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        gyroTurn(0.3, 10);
+        gyroHold(0.3,10,1);
+        currentAngle = 10;
+
+        robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        robot.frontLeft.setPower(0.5);
+        robot.frontRight.setPower(-0.3);
+        robot.backLeft.setPower(-0.3);
+        robot.backRight.setPower(0.4);
+
+        runtime.reset();
+        while (opModeIsActive() && (runtime.seconds() < 1.3)) {
+            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
+            telemetry.update();
         }
-        robot.lift.setPower(0);
+        robot.frontLeft.setPower(0);
+        robot.frontRight.setPower(0);
+        robot.backLeft.setPower(0);
+        robot.backRight.setPower(0);
 
-        gyroDrive(DRIVE_SPEED,12,0);
+        robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        sleep(250);
 
-        for (int i = 0; i < 3; i++) {
-            while (opModeIsActive() && robot.magneticLimitSwitch.getState()) // move until false
-                robot.lift.setPower(-1);
-            while (opModeIsActive() && !robot.magneticLimitSwitch.getState()) // move until true
-                robot.lift.setPower(-1);
-        }
-        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_GREEN);
+
+        gyroDrive(DRIVE_SPEED,7, currentAngle);
     }
-
 
     public void leftMineral() throws InterruptedException{
 
@@ -347,13 +333,12 @@ public class AutoDepot2 extends LinearOpMode {
     }
 
     public void removeMarker() throws InterruptedException{
-        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_WHITE);
-        robot.marker.setPower(-1);
-        runtime.reset();
-        while(opModeIsActive()&& runtime.seconds() < 3) {
-
+        for(int i = 0; i < 3; i++) {
+            robot.marker.setPower(1);
+            sleep(500);
+            robot.marker.setPower(-1);
+            sleep(500);
         }
-        robot.marker.setPower(0);
     }
 
 
@@ -396,7 +381,6 @@ public class AutoDepot2 extends LinearOpMode {
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-
 
 
     /**
@@ -468,7 +452,7 @@ public class AutoDepot2 extends LinearOpMode {
 
                 // Normalize speeds if either one exceeds +/- 1.0;
                 max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-                if (max > 1.0) {
+                if (max > 6.0) {
                     leftSpeed /= max;
                     rightSpeed /= max;
                 }

@@ -29,34 +29,26 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 /**
- * This OpMode uses the common Pushbot hardware class to define the devices on the robot.
- * All device access is managed through the HardwarePushbot class.
- * The code is structured as a LinearOpMode
- *
- * This particular OpMode executes a POV Game style Teleop for a PushBot
- * In this mode the left stick moves the robot FWD and back, the Right stick turns left and right.
- * It raises and lowers the claw using the Gampad Y and A buttons respectively.
- * It also opens and closes the claws slowly using the left and right Bumper buttons.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ * Created by Neha Deshpande, FTC 12116 on 9/1/2018.
  */
 
 @TeleOp(name="Ihba Main", group="Neha")
 // @Disabled
 public class IhbaTeleop extends LinearOpMode {
 
-    final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
-
     /* Declare OpMode members. */
     HardwareIhba robot = new HardwareIhba();   // Use a Redbot's hardware
-
+    private ElapsedTime runtime = new ElapsedTime();
     double target = 0;
-    double SERVO_SPEED = .1;
+    private int chosen = 1; // default is double controller
 
     @Override
     public void runOpMode() {
@@ -65,19 +57,43 @@ public class IhbaTeleop extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
-        robot.detector.disable();
-        // Send telemetry message to signify robot waiting;
-        telemetry.addData("Say", "\"Guys we won our first competition!\" - Ihba");
-        telemetry.update();
-        // Which idiot wrote the documentation for this code? I have no idea what I'm doing - Ihba
+        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
+        robot.samplingDetector.disable();
+
 
         // Wait for the game to start (driver presses PLAY)
-        waitForStart();
+        Gamepad[] controller = new Gamepad[2]; // this is cool, it should go in the engineering notebook -- efficiency of using arrays as opposed to two if/else statements per gamepad
+        controller[0] = gamepad1;
+        controller[1] = gamepad2;
 
+        telemetry.addData("Say", "Press A for single controller\nPress B for double controller");
+        telemetry.update();
+
+        while (!isStopRequested() && !isStarted())  {   // default is single controller
+            if (gamepad1.a || gamepad2.a) {
+                telemetry.addData("Say", "you chose single controller!");
+                telemetry.update();
+                chosen = 0; // controller at index 0 is gamepad1
+            }
+            else if (gamepad1.b || gamepad2.b) {
+                telemetry.addData("Say", "you chose double controller!");
+                telemetry.update();
+                chosen = 1; // controller at index 1 is gamepad2
+            }
+        }
+
+        // Send telemetry message to signify robot waiting;
+        telemetry.addData("Say", "\"I'm lit, get it?\" - Ihba");
+        telemetry.update();
+        // Hello 2018-19 Redbots!\nHow many robots does it take to screw " + "in a lightbulb?\nThree - one to hold the lightbulb and two to turn the ladder! 7/1/18
+        // Can we remove the plexiglass panels again? 11/10/18
+        // Guys we won our first competition! 11/17/18
+        // "I'm lit, get it?" - Ihba 11/28/18
+        // Which idiot wrote this code? I have no idea what I'm doing - Ihba
+
+        runtime.reset();
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
-            // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
 
             // Convert joysticks to desired motion
             Mecanum.Motion motion = Mecanum.joystickToMotion(
@@ -91,25 +107,83 @@ public class IhbaTeleop extends LinearOpMode {
             robot.backRight.setPower(wheels.backRight);
 
 
-            if (!gamepad1.dpad_up && !gamepad1.dpad_down)
+//            if (gamepad1.left_stick_x == 0 && gamepad1.left_stick_y == 0 && gamepad1.right_stick_y == 0 &&
+//                    gamepad1.right_stick_x == 0 &&
+//                    !gamepad1.right_bumper && !gamepad1.left_bumper) {  // test these values
+//                robot.frontLeft.setPower(0);
+//                robot.frontRight.setPower(0);
+//                robot.backLeft.setPower(0);
+//                robot.backRight.setPower(0);
+//            } else if (gamepad1.right_bumper){ // strafe right
+//                robot.frontLeft.setPower(1);
+//                robot.frontRight.setPower(-1);
+//                robot.backLeft.setPower(-1);
+//                robot.backRight.setPower(1);
+//            } else if (gamepad1.left_bumper) { // strafe left
+//                robot.frontLeft.setPower(-1);
+//                robot.frontRight.setPower(1);
+//                robot.backLeft.setPower(1);
+//                robot.backRight.setPower(-1);
+//            }
+
+            if (!controller[chosen].dpad_up && !controller[chosen].dpad_down)
                 robot.lift.setPower(0);
-            else if (gamepad1.dpad_down)
+            else if (controller[chosen].dpad_down)
                 robot.lift.setPower(-1);
-            else if (gamepad1.dpad_up)
+            else if (controller[chosen].dpad_up)
                 robot.lift.setPower(1);
 
 
-            if (gamepad1.right_bumper)
-                robot.sampling.setPosition(robot.sampling.getPosition() + CLAW_SPEED);
-            else if (gamepad1.left_bumper)
-                robot.sampling.setPosition(robot.sampling.getPosition() - CLAW_SPEED);
+            if (controller[chosen].y){ // press one button to move the lift up completely
+                moveLatch(1);
+            }
+            if (controller[chosen].a){ // press one button to move the lift down completely
+                moveLatch(-1);
+            }
+
+//            if (!controller[chosen].b && !controller[chosen].x)
+//                robot.marker.setPower(0);
+//            else if (controller[chosen].b)
+//                robot.marker.setPower(1);
+//            else if (controller[chosen].x)
+//                robot.marker.setPower(-1);
 
 
-            if (gamepad1.b)
-                robot.teamMarker.setPosition(robot.MARKER_EXTENDED);
-            else if (gamepad1.x)
-                robot.teamMarker.setPosition(robot.MARKER_RETRACTED);
+            if (!controller[chosen].dpad_left && !controller[chosen].dpad_right)    // marker extention
+                robot.marker.setPower(0);
+            else if(controller[chosen].dpad_left)
+                robot.marker.setPower(2);
+            else if(controller[chosen].dpad_right)
+                robot.marker.setPower(-2);
 
+
+            if (!controller[chosen].left_bumper && !controller[chosen].right_bumper)    // marker dumper
+                robot.dump.setPower(0);
+            else if (controller[chosen].left_bumper)
+                robot.dump.setPower(1);
+            else if (controller[chosen].right_bumper)
+                robot.dump.setPower(-1);
+
+//            if (runtime.seconds() > 90)    // end game
+//                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED); // this should be a different red than the shot_red
         }
+    }
+
+    public void moveLatch(double speed){
+        /*
+        if latch going up
+        move up until it is false
+        keep moving up until it is true
+         */
+        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
+        while (opModeIsActive() && robot.magneticLimitSwitch.getState() && !gamepad2.x) // move until false or until x is pressed
+            robot.lift.setPower(speed);
+
+        while (opModeIsActive() && !robot.magneticLimitSwitch.getState() && !gamepad2.x) // move until true or until x is pressed
+            robot.lift.setPower(speed);
+        //if (speed > 0)
+          //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+
+        robot.lift.setPower(0);
     }
 }

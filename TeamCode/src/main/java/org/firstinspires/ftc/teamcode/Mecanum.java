@@ -131,7 +131,7 @@ import java.util.List;
             double maxPower = Collections.max(powers);
             double maxMag = Math.max(Math.abs(minPower), Math.abs(maxPower));
 
-            if (maxMag > 1.0) {
+            if (maxMag > 0.5) {             // change the blue value to somewhere between 0 (slowest) and 1 (fastest)
                 for (int i = 0; i < powers.size(); i++) {
                     powers.set(i, powers.get(i) / maxMag);
                 }

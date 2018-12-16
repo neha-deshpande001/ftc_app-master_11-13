@@ -32,23 +32,16 @@ package org.firstinspires.ftc.teamcode;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldDetector;
 import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IntegratingGyroscope;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.GyroSensor;
-import org.opencv.core.Size;
-import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 
 /**
@@ -67,10 +60,11 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
  * Servo channel:  Servo to open left claw:  "left_hand"
  * Servo channel:  Servo to open right claw: "right_hand"
  */
-public class HardwareIhba
+public class HardwareSecond
 {
 
-    public SamplingOrderDetector samplingDetector;
+
+    public GoldAlignDetector detector;
     //public GoldAlignDetector alignDetector;
 
     /* Public OpMode members. */
@@ -88,13 +82,13 @@ public class HardwareIhba
     ModernRoboticsI2cGyro modernRoboticsI2cGyro2;
     //public DigitalChannel digitalTouch;
     DigitalChannel magneticLimitSwitch;  // Hardware Device Object
-    DigitalChannel magneticLimitSwitch2;
+
 
     public CRServo marker = null;
-    public CRServo dump = null;
-////      rjberry@rjcontrol.com
-//
-    //RevBlinkinLedDriver blinkinLedDriver;
+
+//      rjberry@rjcontrol.com
+
+    RevBlinkinLedDriver blinkinLedDriver;
 
 
     /* local OpMode members. */
@@ -102,7 +96,7 @@ public class HardwareIhba
     private ElapsedTime period  = new ElapsedTime();
 
     /* Constructor */
-    public HardwareIhba(){ }
+    public HardwareSecond(){ }
 
     /* Initialize standard Hardware interfaces */
     public void init(HardwareMap ahwMap) {
@@ -125,11 +119,8 @@ public class HardwareIhba
         magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
         magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
 
-        magneticLimitSwitch2 = hwMap.get(DigitalChannel.class, "sensor_digital2");
-        magneticLimitSwitch2.setMode(DigitalChannel.Mode.INPUT);
 
-
-        frontLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+        frontLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         frontRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         backLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         backRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -155,29 +146,29 @@ public class HardwareIhba
 
         marker = hwMap.get(CRServo.class ,"Marker");
         marker.setPower(0);
-        dump = hwMap.get(CRServo.class,"Dump");
-        dump.setPower(0);
-//
-//        blinkinLedDriver = hwMap.get(RevBlinkinLedDriver.class, "blinkin");
-//        blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_GRAY);    // change color if necessary
+
+        blinkinLedDriver = hwMap.get(RevBlinkinLedDriver.class, "blinkin");
+        blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_GRAY);    // change color if necessary
 
 
         // Set up detector
-        samplingDetector = new SamplingOrderDetector(); // Create the detector
-        samplingDetector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize detector with app context and camera
-        samplingDetector.useDefaults(); // Set detector to use default settings
-
-        samplingDetector.downscale = 0.4; // How much to downscale the input frames
+        detector = new GoldAlignDetector(); // Create detector
+        detector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+        detector.useDefaults(); // Set detector to use default settings
 
         // Optional tuning
-        samplingDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        detector.downscale = 0.4; // How much to downscale the input frames
+
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
         //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-        samplingDetector.maxAreaScorer.weight = 0.001;
+        detector.maxAreaScorer.weight = 0.005; //
 
-        samplingDetector.ratioScorer.weight = 15;
-        samplingDetector.ratioScorer.perfectRatio = 1.0;
+        detector.ratioScorer.weight = 5; //
+        detector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
 
-        samplingDetector.enable(); // Start detector
+        detector.enable(); // Start the detector!
 
 
 
@@ -203,14 +194,22 @@ public class HardwareIhba
 
  /* stuff to do in order of importance
 
- - only TEST gyro strafe
- - PixyCam
+ - take pictures of gyro angular velocity telemetry and gyro straight correction for notebook
+ - test ConceptRampMotorSpeed (just make sure it works)
  - fix gyro straight/turn coefficients (make it smoother) (depending on time)
- - autonomous for both sides
+ - test touch sensor (depending on time)
 
+ - phone angle for SamplingOrderDetector
+ - encoder unlatching
+ - accurate mineral alignment maybe using GoldAlignDetector?
+ - team marker. either a physical mechanism or robot has to actually go around?
+ - touching crater (using Vuforia??)
+
+ - all the above for the Crater side
+
+ - limit switch (which is programmed just like a REV touch sensor (SensorDigitalTouch))
  - gyro strafe
- - talking robot
- - ConceptRampMotorSpeed
+ - switch front and back maybe
  - lerp / accelerate motors when starting motion
 
 */

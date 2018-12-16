@@ -29,54 +29,28 @@
 //
 //package org.firstinspires.ftc.teamcode;
 //
-//import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cColorSensor;
-//import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+//import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 //import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+//import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //import com.qualcomm.robotcore.hardware.DcMotor;
+//import com.qualcomm.robotcore.hardware.Gamepad;
 //import com.qualcomm.robotcore.util.ElapsedTime;
 //import com.qualcomm.robotcore.util.Range;
 //
+//import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+//import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
+//
+//
 ///**
-// * This file illustrates the concept of driving a path based on Gyro heading and encoder counts.
-// * It uses the common Pushbot hardware class to define the drive on the robot.
-// * The code is structured as a LinearOpMode
-// *
-// * The code REQUIRES that you DO have encoders on the wheels,
-// *   otherwise you would use: PushbotAutoDriveByTime;
-// *
-// *  This code ALSO requires that you have a Modern Robotics I2C gyro with the name "gyro"
-// *   otherwise you would use: PushbotAutoDriveByEncoder;
-// *
-// *  This code requires that the drive Motors have been configured such that a positive
-// *  power command moves them forward, and causes the encoders to count UP.
-// *
-// *  This code uses the RUN_TO_POSITION mode to enable the Motor controllers to generate the run profile
-// *
-// *  In order to calibrate the Gyro correctly, the robot must remain stationary during calibration.
-// *  This is performed when the INIT button is pressed on the Driver Station.
-// *  This code assumes that the robot is stationary when the INIT button is pressed.
-// *  If this is not the case, then the INIT should be performed again.
-// *
-// *  Note: in this example, all angles are referenced to the initial coordinate frame set during the
-// *  the Gyro Calibration process, or whenever the program issues a resetZAxisIntegrator() call on the Gyro.
-// *
-// *  The angle of movement/rotation is assumed to be a standardized rotation around the robot Z axis,
-// *  which means that a Positive rotation is Counter Clock Wise, looking down on the field.
-// *  This is consistent with the FTC field coordinate conventions set out in the document:
-// *  ftc_app\doc\tutorial\FTC_FieldCoordinateSystemDefinition.pdf
-// *
-// * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
-// * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+// * Created by Neha Deshpande, FTC 12116 on 12/8/2018.
 // */
 //
-//@Autonomous(name="Crater Auto", group="Neha")
+//@TeleOp(name="Gyro Coeff Testing", group="Neha")
 //// @Disabled
-//public class CraterAuto extends LinearOpMode {
+//public class GyroCoeffTesting extends LinearOpMode {
 //
 //    /* Declare OpMode members. */
-//    HardwareIhba robot = new HardwareIhba();   // Use a Pushbot's hardware
-//    private ElapsedTime     runtime = new ElapsedTime();
-//
+//    HardwareIhba robot = new HardwareIhba();   // Use a Redbot's hardware
 //    static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
 //    static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
 //    static final double WHEEL_DIAMETER_INCHES = 4.0;         // For figuring circumference
@@ -85,188 +59,102 @@
 //
 //    // These constants define the desired driving/control characteristics
 //    // The can/should be tweaked to suite the specific robot drive train.
-//    static final double     SLOW_DRIVE_SPEED        = 0.3;
 //    static final double     DRIVE_SPEED             = 0.4;
 //    static final double     TURN_SPEED              = 0.3;
-//    static final double     LIFT_SPEED              = 0.5;
-//    static final double     STRAFE_SPEED            = 0.3;
+//    static final double     STRAFE_SPEED            = 0.5;
 //
 //
 //    static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
 //    static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
-//    static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
-//    static final double ALIGNED_CAMERA_PIXEL = 600;      // Pixel that is at the center of the x-axis of the camera
+//    double P_DRIVE_COEFF = 0.05;     // Larger is more responsive, but also less stable
+//    static final double P_STRAFE_COEFF = 0.1;
 //
-//    double color_num = 3; // 3 = blue, 10 = red
-//    double current_distance_from_wall = -1;
-//    double currentAngle = 0;
+//    private static double precision = 0.1;
+//    private static double deltaPrecision = 0.01;
+//    private static long delay = 350;
 //
 //    @Override
 //    public void runOpMode() {
 //
-//        /*
-//         * Initialize the standard drive system variables.
-//         * The init() method of the hardware class does most of the work here
+//        /* Initialize the hardware variables.
+//         * The init() method of the hardware class does all the work here
 //         */
 //        robot.init(hardwareMap);
+//        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+//        robot.samplingDetector.disable();
 //
 //
-//        telemetry.addData(">", "color_num = ", color_num);
+//        // Wait for the game to start (driver presses PLAY)
+//        waitForStart();
+//
+//        // Send telemetry message to signify robot waiting;
+//        telemetry.addData("Say", "\"I'm lit, get it?\" - Ihba");
 //        telemetry.update();
 //
-//        // Ensure the robot is stationary, then reset the encoders and calibrate the gyro.
-//        robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        // run until the end of the match (driver presses STOP)
+//        while (opModeIsActive()) {
 //
-//        // Send telemetry message to alert driver that we are calibrating;
-//        telemetry.addData(">", "Calibrating Gyro");    //
-//        telemetry.update();
+//            // Convert joysticks to desired motion
+//            Mecanum.Motion motion = Mecanum.joystickToMotion(
+//                    gamepad1.left_stick_x, gamepad1.left_stick_y,
+//                    gamepad1.right_stick_x, gamepad1.right_stick_y);
+//            // Convert desired motion to wheel powers, with power clamping
+//            Mecanum.Wheels wheels = Mecanum.motionToWheels(motion);
+//            robot.frontLeft.setPower(wheels.frontLeft);
+//            robot.frontRight.setPower(wheels.frontRight);
+//            robot.backLeft.setPower(wheels.backLeft);
+//            robot.backRight.setPower(wheels.backRight);
 //
-//        robot.modernRoboticsI2cGyro.calibrate();
+///*
+//x = hard stop
+//right_bumper = decrease precision
+//left_bumper = increase precision
+//dpad_up = increase coeff
+//dpad_down = decrease coeff
+//b = play auto
+// */
 //
-//        // make sure the gyro is calibrated before continuing
-//        while (!isStopRequested() && robot.modernRoboticsI2cGyro.isCalibrating()) {
-//            sleep(50);
-//            idle();
+//            if (gamepad1.x){
+//                robot.frontLeft.setPower(0);
+//                robot.backLeft.setPower(0);
+//                robot.backRight.setPower(0);
+//                robot.frontRight.setPower(0);
+//            }
+//            if (gamepad1.b)
+//                gyroDrive(DRIVE_SPEED,30,robot.modernRoboticsI2cGyro.getIntegratedZValue());
+//
+//            if (gamepad1.right_bumper) {    // Pressing this makes it less precise
+//                precision += deltaPrecision;
+//                sleep(delay);
+//            }
+//            if (gamepad1.left_bumper){      // Pressing this makes it more precise
+//                precision -= deltaPrecision;
+//                sleep(delay);
+//            }
+//
+//            if (gamepad1.dpad_up) {
+//                P_DRIVE_COEFF += precision;
+//                sleep(delay);
+//            }
+//            if (gamepad1.dpad_down) {
+//                P_DRIVE_COEFF -= precision;
+//                sleep(delay);
+//            }
+//            print();
+//
 //        }
 //
-//        telemetry.addData(">", "Robot Ready.");    //
-//        telemetry.update();
-//
-//        robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//
-//        // Wait for the game to start (Display Gyro value), and reset gyro before we move.
-//        while (!isStarted()) {
-//            telemetry.addData(">", "Robot Heading = %d", robot.modernRoboticsI2cGyro.getIntegratedZValue());
-//            telemetry.update();
-//        }
-//
-//        robot.modernRoboticsI2cGyro.resetZAxisIntegrator();
-//
-//        // Step through each leg of the path,
-//        // Note: Reverse movement is obtained by setting a negative distance (not speed)
-//        // Put a hold after each turn
-//
-//
-//
-//        // unlatch
-//        robot.lift.setPower(LIFT_SPEED);
-//        runtime.reset();
-//        while (opModeIsActive() && (runtime.seconds() < 5.9)) {
-//            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
-//            telemetry.update();
-//        }
-//        robot.lift.setPower(0);
-//
-//        sleep(500);
-//
-//        // turn right
-//        robot.frontLeft.setPower(-0.05);
-//        robot.frontRight.setPower(0.1);
-//        robot.backLeft.setPower(-0.05);
-//        robot.backRight.setPower(0.1);
-//        runtime.reset();
-//        while (opModeIsActive() && (runtime.seconds() < 1.2)) {
-//            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
-//            telemetry.update();
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.frontRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//
-//        sleep(500);
-//
-//        // move right
-//        robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//
-//        robot.frontLeft.setPower(STRAFE_SPEED);
-//        robot.frontRight.setPower(-STRAFE_SPEED);
-//        robot.backLeft.setPower(-STRAFE_SPEED);
-//        robot.backRight.setPower(STRAFE_SPEED);
-//
-//        runtime.reset();
-//        while (opModeIsActive() && (runtime.seconds() < 1.3)) {
-//            telemetry.addData("Path", "Leg 1: %2.5f S Elapsed", runtime.seconds());
-//            telemetry.update();
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.frontRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//
-//        sleep(250);
-//
-//        // more forward
-//        robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        gyroDrive(DRIVE_SPEED, 6, 0);
-//
-//        sleep(250);
-//
-//        gyroTurn(TURN_SPEED, -25);
-//        gyroHold(TURN_SPEED,-25,2);
-//        currentAngle = -25;
-//        sleep(250);
-//
-//        if (!robot.detector.getAligned()){
-//            gyroTurn(TURN_SPEED, -15);
-//            gyroHold(TURN_SPEED,-15,2);
-//            currentAngle = -15;
-//        }
-//        sleep(250);
-//
-//        // go left until mineral is aligned
-//        robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//
-//        robot.frontRight.setPower(0.3);
-//        robot.frontLeft.setPower(-0.3);
-//        robot.backRight.setPower(-0.3);
-//        robot.backLeft.setPower(0.3);
-//
-//        while(!robot.detector.getAligned() && opModeIsActive()){
-//            telemetry.addData(">", "The robot is aligning with the mineral", runtime.seconds());
-//            telemetry.update();
-//        }
-//
-//        telemetry.addData(">", "The mineral has been found!");
-//        robot.frontRight.setPower(0);
-//        robot.frontLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//
-//        robot.detector.disable();
-//
-//
-//        robot.sampling.setPosition(0.8);
-//
-//        robot.frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        gyroDrive(1,25, currentAngle);
-//
-//        sleep(250);
-//
-//
-//        telemetry.addData("Path", "Complete");
-//        telemetry.update();
 //    }
 //
 //
+//    public void print(){
+//        telemetry.addData("precision", precision);
+//        telemetry.addData("deltaPrecision", deltaPrecision);
+//        telemetry.addData("delay", delay);
+//        telemetry.addData("P_DRIVE_COEFF",P_DRIVE_COEFF);
+//
+//        telemetry.update();
+//    }
 //    /**
 //     * Method to drive on a fixed compass bearing (angle), based on encoder counts.
 //     * Move will stop if either of these conditions occur:
@@ -476,8 +364,18 @@
 //
 //        double robotError;
 //
-//        // calculate error in -179 to +180 range  (
-//        robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+//        AngularVelocity rates = robot.gyro.getAngularVelocity(AngleUnit.DEGREES);
+//
+//        if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
+//            robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+//            telemetry.addData(">","first gyro");
+//            telemetry.update();
+//        }
+//        else{
+//            robotError = targetAngle - robot.modernRoboticsI2cGyro2.getIntegratedZValue();
+//            telemetry.addData(">","backup");
+//            telemetry.update();
+//        }
 //        while (robotError > 180) robotError -= 360;
 //        while (robotError <= -180) robotError += 360;
 //        return robotError;
@@ -493,68 +391,8 @@
 //    public double getSteer(double error, double PCoeff) {
 //        return Range.clip(error * PCoeff, -1, 1);
 //    }
-//
-//
-//    public void findLine(){
-//
-//        while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num){
-//            robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//            robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.frontRight.setPower(0);
-//        robot.backLeft.setPower(0);
-//        robot.backRight.setPower(0);
-//
-//        while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//            robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//            robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontLeft.setPower(0);
-//        robot.backLeft.setPower(0);
-//
-//        while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//            robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//            robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//        }
-//        robot.frontRight.setPower(0);
-//        robot.backRight.setPower(0);
-//
+//    String formatRate(float rate) {
+//        return String.format("%.3f", rate);
 //    }
 //
-//    public void lineSquare(){
-//        for (int i = 0; i < 2; i++) {
-//            while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == color_num) {
-//                robot.frontRight.setPower(SLOW_DRIVE_SPEED);
-//                robot.backRight.setPower(SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontRight.setPower(0);
-//            robot.backRight.setPower(0);
-//
-//            while (opModeIsActive() && robot.colorRight.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//                robot.frontRight.setPower(-SLOW_DRIVE_SPEED);
-//                robot.backRight.setPower(-SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontRight.setPower(0);
-//            robot.backRight.setPower(0);
-//
-//
-//            while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) == color_num) {
-//                robot.frontLeft.setPower(SLOW_DRIVE_SPEED);
-//                robot.backLeft.setPower(SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontLeft.setPower(0);
-//            robot.backLeft.setPower(0);
-//
-//            while (opModeIsActive() && robot.colorLeft.readUnsignedByte(ModernRoboticsI2cColorSensor.Register.COLOR_NUMBER) != color_num) {
-//                robot.frontLeft.setPower(-SLOW_DRIVE_SPEED);
-//                robot.backLeft.setPower(-SLOW_DRIVE_SPEED);
-//            }
-//            robot.frontLeft.setPower(0);
-//            robot.backLeft.setPower(0);
-//
-//        }
-//    }
 //}

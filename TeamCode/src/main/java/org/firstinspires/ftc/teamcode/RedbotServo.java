@@ -34,17 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
 /**
- * This OpMode uses the common Pushbot hardware class to define the devices on the robot.
- * All device access is managed through the HardwarePushbot class.
- * The code is structured as a LinearOpMode
- *
- * This particular OpMode executes a POV Game style Teleop for a PushBot
- * In this mode the left stick moves the robot FWD and back, the Right stick turns left and right.
- * It raises and lowers the claw using the Gampad Y and A buttons respectively.
- * It also opens and closes the claws slowly using the left and right Bumper buttons.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ * Created by Neha Deshpande, FTC 12116 on 7/1/2018.
  */
 
 @TeleOp(name="Servo Position Finder", group="Neha")
@@ -84,7 +74,20 @@ public class RedbotServo extends LinearOpMode {
 
 
                 // Pressing Y and dpad_up or dpad_down changes teamMarker's position
-//                while (opModeIsActive() && gamepad1.y) {
+                while (opModeIsActive() && gamepad1.y) {
+                    print();
+                    if (gamepad1.dpad_up) {
+                        robot.dump.setPower(precision);
+                        sleep(delay);
+                    }
+                    if (gamepad1.dpad_down) {
+                        robot.dump.setPower(precision);
+                        sleep(delay);
+                    }
+                }
+
+                // Pressing A and dpad_up or dpad_down changes sampling's position
+//                while (opModeIsActive() && gamepad1.a) {
 //                    print();
 //                    if (gamepad1.dpad_up) {
 //                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() + precision);
@@ -95,19 +98,6 @@ public class RedbotServo extends LinearOpMode {
 //                        sleep(delay);
 //                    }
 //                }
-
-                // Pressing A and dpad_up or dpad_down changes sampling's position
-                while (opModeIsActive() && gamepad1.a) {
-                    print();
-                    if (gamepad1.dpad_up) {
-                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() + precision);
-                        sleep(delay);
-                    }
-                    if (gamepad1.dpad_down) {
-                        robot.teamMarker.setPosition(robot.teamMarker.getPosition() - precision);
-                        sleep(delay);
-                    }
-                }
 
 
                 // getPosition() returns the last value where it was COMMANDED to go to, so can't move servo by hand.
@@ -121,7 +111,7 @@ public class RedbotServo extends LinearOpMode {
     {
         telemetry.addData("precision", precision);
         telemetry.addData("delay", delay);
-        telemetry.addData("a - sampling", robot.teamMarker.getPosition());
+        telemetry.addData("y - marker", robot.marker.getPower());
       //  telemetry.addData("y - teamMarker", robot.teamMarker.getPosition());
         // Add more telemetry here if more servos are needed.
 

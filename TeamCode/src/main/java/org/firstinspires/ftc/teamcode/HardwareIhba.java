@@ -78,7 +78,7 @@ public class HardwareIhba
     public DcMotor  frontRight  = null;
     public DcMotor  backLeft    = null;
     public DcMotor  backRight   = null;
-    public DcMotor  lift        = null;
+    //public DcMotor  lift        = null;
 
     //ModernRoboticsI2cRangeSensor range;
     IntegratingGyroscope gyro;
@@ -87,10 +87,10 @@ public class HardwareIhba
     IntegratingGyroscope gyro2;
     ModernRoboticsI2cGyro modernRoboticsI2cGyro2;
     //public DigitalChannel digitalTouch;
-    DigitalChannel magneticLimitSwitch;  // Hardware Device Object
-    DigitalChannel magneticLimitSwitch2;
+    //DigitalChannel magneticLimitSwitch;  // Hardware Device Object
+    //DigitalChannel magneticLimitSwitch2;
 
-    public CRServo marker = null;
+    //public CRServo marker = null;
     public CRServo dump = null;
 ////      rjberry@rjcontrol.com
 //
@@ -114,7 +114,7 @@ public class HardwareIhba
         frontRight = hwMap.get(DcMotor.class, "FrontRight");
         backLeft  = hwMap.get(DcMotor.class, "BackLeft");
         backRight = hwMap.get(DcMotor.class, "BackRight");
-        lift = hwMap.get(DcMotor.class, "Lift");
+        //lift = hwMap.get(DcMotor.class, "Lift");
 
 
         modernRoboticsI2cGyro = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
@@ -122,25 +122,25 @@ public class HardwareIhba
         modernRoboticsI2cGyro2 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro2");
         gyro2 = (IntegratingGyroscope)modernRoboticsI2cGyro;
 
-        magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
-        magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
+//        magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
+//        magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
+//
+//        magneticLimitSwitch2 = hwMap.get(DigitalChannel.class, "sensor_digital2");
+//        magneticLimitSwitch2.setMode(DigitalChannel.Mode.INPUT);
 
-        magneticLimitSwitch2 = hwMap.get(DigitalChannel.class, "sensor_digital2");
-        magneticLimitSwitch2.setMode(DigitalChannel.Mode.INPUT);
 
-
-        frontLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        frontRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-        backLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        backRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-        lift.setDirection(DcMotor.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors/
+        frontRight.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+        backLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+        backRight.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors/
+        //lift.setDirection(DcMotor.Direction.REVERSE);
 
         // Set all motors to zero power
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
-        lift.setPower(0);
+        //lift.setPower(0);
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
@@ -148,13 +148,13 @@ public class HardwareIhba
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Define and initialize ALL installed servos.
 
 
-        marker = hwMap.get(CRServo.class ,"Marker");
-        marker.setPower(0);
+//        marker = hwMap.get(CRServo.class ,"Marker");
+//        marker.setPower(0);
         dump = hwMap.get(CRServo.class,"Dump");
         dump.setPower(0);
 //

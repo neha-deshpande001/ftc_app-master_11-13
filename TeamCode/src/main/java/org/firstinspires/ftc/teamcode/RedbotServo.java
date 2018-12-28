@@ -111,7 +111,7 @@ public class RedbotServo extends LinearOpMode {
     {
         telemetry.addData("precision", precision);
         telemetry.addData("delay", delay);
-        telemetry.addData("y - marker", robot.marker.getPower());
+        //telemetry.addData("y - marker", robot.marker.getPower());
       //  telemetry.addData("y - teamMarker", robot.teamMarker.getPosition());
         // Add more telemetry here if more servos are needed.
 

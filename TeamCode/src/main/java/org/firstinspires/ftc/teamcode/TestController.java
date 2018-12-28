@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -49,9 +48,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Double Controller", group="Neha")
+@TeleOp(name="Test Controller", group="Neha")
 // @Disabled
-public class DoubleController extends LinearOpMode {
+public class TestController extends LinearOpMode {
 
     final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
 
@@ -94,18 +93,21 @@ public class DoubleController extends LinearOpMode {
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
 
             // Convert joysticks to desired motion
+            if (!gamepad1.x && !gamepad1.y && !gamepad1.a && !gamepad1.b){
+                robot.frontLeft.setPower(0);
+                robot.frontRight.setPower(0);
+                robot.backLeft.setPower(0);
+                robot.backRight.setPower(0);
 
-            Mecanum.Motion motion = Mecanum.joystickToMotion(
-                    gamepad1.left_stick_x, gamepad1.left_stick_y,
-                    gamepad1.right_stick_x, gamepad1.right_stick_y);
-
-            // Convert desired motion to wheel powers, with power clamping.
-            Mecanum.Wheels wheels = Mecanum.motionToWheels(motion);
-            robot.frontLeft.setPower(wheels.frontLeft);
-            robot.frontRight.setPower(wheels.frontRight);
-            robot.backLeft.setPower(wheels.backLeft);
-            robot.backRight.setPower(wheels.backRight);
-
+            }
+            if (gamepad1.x) //back left
+                robot.frontLeft.setPower(1);
+            if (gamepad1.y) //front right
+                robot.frontRight.setPower(1);
+            if (gamepad1.a) // front left
+                robot.backLeft.setPower(1);
+            if (gamepad1.b)//backright
+                robot.backRight.setPower(1);
 //            if (gamepad1.left_stick_x == 0 && gamepad1.left_stick_y == 0 && gamepad1.right_stick_y == 0 &&
 //                    gamepad1.right_stick_x == 0 &&
 //                    !gamepad1.right_bumper && !gamepad1.left_bumper) {  // test these values

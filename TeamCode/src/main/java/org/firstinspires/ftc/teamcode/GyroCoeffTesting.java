@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -46,7 +47,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
  */
 
 @TeleOp(name="Gyro Coeff Testing", group="Neha")
-// @Disabled
+@Disabled
 public class GyroCoeffTesting extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -81,7 +82,7 @@ public class GyroCoeffTesting extends LinearOpMode {
          */
         robot.init(hardwareMap);
         //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
-        robot.samplingDetector.disable();
+        robot.alignDetector.disable();
 
 
         // Wait for the game to start (driver presses PLAY)
@@ -121,7 +122,7 @@ b = play auto
                 robot.frontRight.setPower(0);
             }
             if (gamepad1.b)
-                gyroDrive(0.2,30, robot.modernRoboticsI2cGyro.getIntegratedZValue());
+                gyroDrive(0.2,90, robot.modernRoboticsI2cGyro1.getIntegratedZValue());
 
             if (gamepad1.right_bumper) {    // Pressing this makes it less precise
                 precision += deltaPrecision;
@@ -364,10 +365,10 @@ b = play auto
 
         double robotError;
 
-        AngularVelocity rates = robot.gyro.getAngularVelocity(AngleUnit.DEGREES);
+        AngularVelocity rates = robot.gyro1.getAngularVelocity(AngleUnit.DEGREES);
 
         if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
-            robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+            robotError = targetAngle - robot.modernRoboticsI2cGyro1.getIntegratedZValue();
             telemetry.addData(">","first gyro");
             telemetry.update();
         }

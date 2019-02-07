@@ -123,7 +123,7 @@ public class Mecanum {
         double maxPower = Collections.max(powers);
         double maxMag = Math.max(Math.abs(minPower), Math.abs(maxPower));
 
-        if (maxMag > 1.0) { // change this if possible
+        if (maxMag > 1) { // change this if necessary
             for (int i = 0; i < powers.size(); i++) {
                 powers.set(i, powers.get(i) / maxMag);
             }

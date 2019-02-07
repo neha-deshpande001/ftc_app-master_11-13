@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -49,7 +50,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 @TeleOp(name="Test Controller", group="Neha")
-// @Disabled
+@Disabled
 public class TestController extends LinearOpMode {
 
     final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
@@ -69,7 +70,7 @@ public class TestController extends LinearOpMode {
          */
         robot.init(hardwareMap);
         //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
-        robot.samplingDetector.disable();
+        robot.alignDetector.disable();
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "\"Which idiot wrote the documentation for this code?\nI have no idea what I'm doing\"\n- Ihba");
         telemetry.update();

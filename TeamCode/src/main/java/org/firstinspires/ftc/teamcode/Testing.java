@@ -106,21 +106,21 @@ public class Testing extends LinearOpMode {
     String goldlocation = "UNKNOWN";
 
     @Override
-    public void runOpMode() throws InterruptedException{
+    public void runOpMode() throws InterruptedException {
 
         /*
          * Initialize the standard drive system variables.
          * The init() method of the hardware class does most of the work here
          */
         robot.init(hardwareMap);
-        robot.samplingDetector.disable();
+        robot.alignDetector.disable();
 
         // Ensure the robot is stationary, then reset the encoders and calibrate the gyro.
         robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.latch.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Send telemetry message to alert driver that we are calibrating;
         telemetry.addData(">", "Calibrating Gyro");    //
@@ -133,7 +133,7 @@ public class Testing extends LinearOpMode {
         robot.frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-       // robot.lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Wait for the game to start (Display Gyro value), and reset gyro before we move.
         while (!isStarted() && !isStopRequested()) {
@@ -143,45 +143,20 @@ public class Testing extends LinearOpMode {
 // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
-
-
-        //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
-        telemetry.addData(">", "Drive 5 in");
-        telemetry.update();
-        encoderDrive(0.2,0.2,24,10,1.5);
-
-        sleep(1000);
-
-//        telemetry.addData(">", "turn 90");
-//        telemetry.update();
-//        gyroTurn(0.5,90);
-//        gyroHold(0.5,90,0.5);
-//
-//        sleep(1000);
-//
-//        telemetry.addData(">", "turn 90");
-//        telemetry.update();
-//        gyroTurn(0.5,0);
-//        gyroHold(0.5,0,0.5);
-//
-//        sleep(1000);
-//
-//        telemetry.addData(">", "drive 5 in backwards.");
-//        telemetry.update();
-//        gyroDrive(0.5,-24,0);
-//
-//        sleep(1000);
-//
-//        telemetry.addData(">", "Encoder strafe left 2 rotations");
-//        telemetry.update();
-//        encoderStrafeLeft(0.5,2,20);
-
-
-
+        for (int i = 0; i < 2; i++) {
+            runtime.reset();
+            robot.dump.setPower(1);
+            while (runtime.seconds() < 2) {
+            }
+            runtime.reset();
+            robot.dump.setPower(-1);
+            while (runtime.seconds() < 2) {
+            }
+        }
         telemetry.addData("Path", "Complete");
         telemetry.update();
-    }
 
+    }
     public void encoderDrive(double Lspeed, double Rspeed, double Inches, double timeoutS, double rampup) throws InterruptedException {
         //initialise some variables for the subroutine
         int newLeftTarget;
@@ -196,10 +171,10 @@ public class Testing extends LinearOpMode {
         runtime.reset();
 
         // keep looping while we are still active, and there is time left, and neither set of motors have reached the target
-        while ( (runtime.seconds() < timeoutS) &&
-                (Math.abs(robot.frontLeft.getCurrentPosition() + robot.backLeft.getCurrentPosition()) /2 < newLeftTarget  &&
-                        Math.abs(robot.frontRight.getCurrentPosition() + robot.backRight.getCurrentPosition())/2 < newRightTarget)) {
-            double rem = (Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition())+Math.abs(robot.frontRight.getCurrentPosition()) + Math.abs(robot.backRight.getCurrentPosition()))/4;
+        while ((runtime.seconds() < timeoutS) &&
+                (Math.abs(robot.frontLeft.getCurrentPosition() + robot.backLeft.getCurrentPosition()) / 2 < newLeftTarget  &&
+                        Math.abs(robot.frontRight.getCurrentPosition() + robot.backRight.getCurrentPosition()) / 2 < newRightTarget)) {
+            double rem = (Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition()) + Math.abs(robot.frontRight.getCurrentPosition()) + Math.abs(robot.backRight.getCurrentPosition())) / 4;
             double NLspeed;
             double NRspeed;
 
@@ -220,15 +195,15 @@ public class Testing extends LinearOpMode {
             }
 
             //start slowing down as you get close to the target
-            else if(rem > (200) && (Lspeed*.2) > .1 && (Rspeed*.2) > .1) {
+            else if(rem > (200) && (Lspeed * 0.2) > 0.1 && (Rspeed * 0.2) > 0.1) {
                 NLspeed = Lspeed * (rem / 1000);
                 NRspeed = Rspeed * (rem / 1000);
             }
 
             //minimum speed
             else {
-                NLspeed = Lspeed * .2;
-                NRspeed = Rspeed * .2;
+                NLspeed = Lspeed * 0.2;
+                NRspeed = Rspeed * 0.2;
 
             }
 
@@ -252,7 +227,7 @@ public class Testing extends LinearOpMode {
         telemetry.update();
 
         //setting resetC as a way to check the current encoder values easily
-        double resetC = ((Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition())+ Math.abs(robot.frontRight.getCurrentPosition())+Math.abs(robot.frontRight.getCurrentPosition())));
+        double resetC = ((Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition()) + Math.abs(robot.frontRight.getCurrentPosition()) + Math.abs(robot.backRight.getCurrentPosition())));
 
         //Get the motor encoder resets in motion
         robot.frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -262,7 +237,7 @@ public class Testing extends LinearOpMode {
 
         //keep waiting while the reset is running
         while (Math.abs(resetC) > 0){
-            resetC =  ((Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition())+ Math.abs(robot.frontRight.getCurrentPosition())+Math.abs(robot.frontRight.getCurrentPosition())));
+            resetC =  ((Math.abs(robot.frontLeft.getCurrentPosition()) + Math.abs(robot.backLeft.getCurrentPosition()) + Math.abs(robot.frontRight.getCurrentPosition()) + Math.abs(robot.backRight.getCurrentPosition())));
             idle();
         }
 
@@ -712,10 +687,10 @@ public class Testing extends LinearOpMode {
 
         double robotError;
 
-        AngularVelocity rates = robot.gyro.getAngularVelocity(AngleUnit.DEGREES);
+        AngularVelocity rates = robot.gyro1.getAngularVelocity(AngleUnit.DEGREES);
 
         if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
-            robotError = targetAngle - robot.modernRoboticsI2cGyro.getIntegratedZValue();
+            robotError = targetAngle - robot.modernRoboticsI2cGyro1.getIntegratedZValue();
             telemetry.addData(">","first gyro");
             telemetry.update();
         }

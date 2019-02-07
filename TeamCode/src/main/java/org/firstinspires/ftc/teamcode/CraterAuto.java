@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -41,11 +40,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 /**
- * Created by Neha Deshpande, FTC 12116 on 12/9/2018.
+ * Created by Neha Deshpande, FTC 12116 on 1/28/2019.
  */
-@Autonomous(name="3.0 Depot", group="Neha")
+@Autonomous(name="4.0 Crater Auto", group="Neha")
 @Disabled
-public class AutoDepot3 extends LinearOpMode {
+public class CraterAuto extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareIhba robot = new HardwareIhba();   // Use a Pushbot's hardware
@@ -179,7 +178,6 @@ public class AutoDepot3 extends LinearOpMode {
         robot.backRight.setPower(0);
         //at this point, robot is facing mineral
         sleep(500);
-
         currentAngle = robot.modernRoboticsI2cGyro1.getHeading();
 
         for(int i = 0; i < 3;i++) {
@@ -217,44 +215,6 @@ public class AutoDepot3 extends LinearOpMode {
         robot.backRight.setPower(0);
 
 
-        if (currentAngle > 15){
-            gyroTurn(TURN_SPEED,-45);
-            gyroHold(TURN_SPEED,-45,holdTime);
-        }
-        else if (currentAngle < -15){
-            gyroTurn(TURN_SPEED,45);
-            gyroHold(TURN_SPEED,45,holdTime);
-        }
-        else{
-            gyroTurn(TURN_SPEED,0);
-            gyroHold(TURN_SPEED,0,holdTime);
-        }
-
-        runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) { }
-        runtime.reset();
-        robot.dump.setPower(-1);
-        while (opModeIsActive() && runtime.seconds() < 0.5) { }
-        runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) {
-        }
-
-        for(int i = 0; i < 1;i++) {
-            runtime.reset();
-            while (runtime.seconds() < 0.5) {
-                robot.frontRight.setPower(-0.3);
-                robot.backRight.setPower(-0.3);
-                robot.frontLeft.setPower(-0.2);
-                robot.backLeft.setPower(-0.2);
-            }
-            robot.frontLeft.setPower(0);
-            robot.frontRight.setPower(0);
-            robot.backLeft.setPower(0);
-            robot.backRight.setPower(0);
-            sleep(100);
-        }
 
         //remove marker
 

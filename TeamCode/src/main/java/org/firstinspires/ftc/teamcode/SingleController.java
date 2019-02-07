@@ -29,11 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -50,18 +48,18 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Double Controller", group="Neha")
+@TeleOp(name="Single Controller", group="Neha")
 // @Disabled
-public class DoubleController extends LinearOpMode {
+public class SingleController extends LinearOpMode {
+
+    final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
 
     /* Declare OpMode members. */
-    HardwareIhba robot = new HardwareIhba();   // Use Ihba's hardware
+    HardwareIhba robot = new HardwareIhba();   // Use a Redbot's hardware
     private ElapsedTime runtime = new ElapsedTime();
 
     double target = 0;
-    private int chosen = 1; // default is double controller
-    private int latchRotations = 36;
-
+    double SERVO_SPEED = .1;
 
     @Override
     public void runOpMode() {
@@ -70,15 +68,8 @@ public class DoubleController extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
-
-        robot.alignDetector.disable();
-
-        Gamepad[] gamepad = new Gamepad[2];
-        gamepad[0] = gamepad1;
-        gamepad[1] = gamepad2;
-
         //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
-
+        robot.alignDetector.disable();
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "\"Which idiot wrote the documentation for this code?\nI have no idea what I'm doing\"\n- Ihba");
         telemetry.update();
@@ -87,7 +78,6 @@ public class DoubleController extends LinearOpMode {
         // Guys we won our first competition! 11/17/18
         // "I'm lit, get it?" - Ihba 11/28/18
         // Which idiot wrote the documentation for this code? I have no idea what I'm doing - Ihba 12/27/18
-        // Write a notebook entry instead of reading this
 
         // Wait for the game to start (driver presses PLAY)
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -95,22 +85,7 @@ public class DoubleController extends LinearOpMode {
         robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        telemetry.addData("Say", "A for single, B for double"); // driver can choose the gamepad
-        telemetry.update();
-
-        while (!isStopRequested() && !isStarted())  {
-            if (gamepad1.a || gamepad2.a) {
-                telemetry.addData("Say", "1: you chose single controller");
-                telemetry.update();
-                chosen = 0;
-            }
-            else if (gamepad1.b || gamepad2.b) {
-                telemetry.addData("Say", "2: you chose double controller");
-                telemetry.update();
-                chosen = 1;
-            }
-        }
-
+        waitForStart();
         runtime.reset();
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -118,6 +93,7 @@ public class DoubleController extends LinearOpMode {
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
 
             // Convert joysticks to desired motion
+
             Mecanum.Motion motion = Mecanum.joystickToMotion(
                     gamepad1.left_stick_x, gamepad1.left_stick_y,
                     gamepad1.right_stick_x, gamepad1.right_stick_y);
@@ -129,30 +105,28 @@ public class DoubleController extends LinearOpMode {
             robot.backLeft.setPower(wheels.backLeft);
             robot.backRight.setPower(wheels.backRight);
 
-            if (!gamepad[chosen].dpad_up && !gamepad[chosen].dpad_down)
+
+            if (!gamepad1.dpad_up && !gamepad1.dpad_down)
                 robot.latch.setPower(0);
-            else if (gamepad[chosen].dpad_down)
+            else if (gamepad1.dpad_down)
                 robot.latch.setPower(1);
-            else if (gamepad[chosen].dpad_up)
+            else if (gamepad1.dpad_up)
                 robot.latch.setPower(-1);
 
-            if (!gamepad[chosen].right_bumper && !gamepad[chosen].left_bumper)
-                robot.dump.setPower(0);
-            if (gamepad[chosen].right_bumper)
-                robot.dump.setPower(1);
-            if (gamepad[chosen].left_bumper)
-                robot.dump.setPower(-1);
-
-            if (gamepad[chosen].a)
+            if (gamepad1.a)
                 latch();
-            if (gamepad[chosen].y)
+            if (gamepad1.y)
                 unlatch();
 
-            if (gamepad[chosen].x)
+            if (gamepad1.x)
                 robot.latch.setPower(0);
 
-
-
+            if (!gamepad1.b && !gamepad1.x)
+                robot.dump.setPower(0);
+            if (gamepad1.b)
+                robot.dump.setPower(1);
+            if (gamepad1.x)
+                robot.dump.setPower(-1);
 
 
 //            if (gamepad1.left_stick_x == 0 && gamepad1.left_stick_y == 0 && gamepad1.right_stick_y == 0 &&
@@ -174,6 +148,8 @@ public class DoubleController extends LinearOpMode {
 //                robot.backRight.setPower(-1);
 //            }
 
+
+
 //            if (gamepad2.y){ // press one button to move the lift up completely
 //                moveLatch(1);
 //            }
@@ -192,15 +168,15 @@ public class DoubleController extends LinearOpMode {
 //                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED); // this should be a different red than the shot_red
         }
     }
-
     public void latch() {
         //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
         int newLatchTarget;
+        int rotations = 36;
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLatchTarget = robot.latch.getCurrentPosition() + (int)(latchRotations * robot.twentyMotorClicks);
+            newLatchTarget = robot.latch.getCurrentPosition() + (int)(rotations * 560);
             robot.latch.setTargetPosition(newLatchTarget);
 
             // Turn On RUN_TO_POSITION
@@ -235,15 +211,15 @@ public class DoubleController extends LinearOpMode {
 
         }
     }
-
     public void unlatch() {
         //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
         int newLatchTarget;
+        int rotations = 36;
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newLatchTarget = robot.latch.getCurrentPosition() - (int)(latchRotations * robot.twentyMotorClicks);
+            newLatchTarget = robot.latch.getCurrentPosition() - (int)(rotations * 560);
             robot.latch.setTargetPosition(newLatchTarget);
 
             // Turn On RUN_TO_POSITION
@@ -275,9 +251,11 @@ public class DoubleController extends LinearOpMode {
 
             // Turn off RUN_TO_POSITION
             robot.latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+//            gyroDrive(DRIVE_SPEED,5,currentAngle);
+//            gyroHold(DRIVE_SPEED,currentAngle,0.25);
         }
     }
-
 //    public void moveLatch(double speed){
 //        /*
 //        if latch going up

@@ -54,6 +54,7 @@ public class RedbotServo extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
+        robot.alignDetector.disable();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -85,7 +86,12 @@ public class RedbotServo extends LinearOpMode {
                         sleep(delay);
                     }
                 }
-
+                if (!gamepad1.b && !gamepad1.x)
+                    robot.dump.setPower(0);
+                if (gamepad1.b)
+                    robot.dump.setPower(1);
+                if (gamepad1.x)
+                    robot.dump.setPower(-1);
                 // Pressing A and dpad_up or dpad_down changes sampling's position
 //                while (opModeIsActive() && gamepad1.a) {
 //                    print();
@@ -111,7 +117,7 @@ public class RedbotServo extends LinearOpMode {
     {
         telemetry.addData("precision", precision);
         telemetry.addData("delay", delay);
-        //telemetry.addData("y - marker", robot.marker.getPower());
+        telemetry.addData("y - dump", robot.dump.getPower());
       //  telemetry.addData("y - teamMarker", robot.teamMarker.getPosition());
         // Add more telemetry here if more servos are needed.
 

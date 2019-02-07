@@ -70,22 +70,30 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 public class HardwareIhba
 {
 
-    public SamplingOrderDetector samplingDetector;
-    //public GoldAlignDetector alignDetector;
+    public int twentyMotorClicks = 560;
+    public int fortyMotorClicks = 1120;
+    public int sixtyMotorClicks = 2240;
+
+//    public SamplingOrderDetector samplingDetector;
+    public GoldAlignDetector alignDetector;
 
     /* Public OpMode members. */
     public DcMotor  frontLeft   = null;
     public DcMotor  frontRight  = null;
     public DcMotor  backLeft    = null;
     public DcMotor  backRight   = null;
-    //public DcMotor  lift        = null;
+    public DcMotor  latch       = null;
+    
+    public DcMotor  mineralLift = null;
+    public DcMotor  intake      = null;
 
     //ModernRoboticsI2cRangeSensor range;
-    IntegratingGyroscope gyro;
-    ModernRoboticsI2cGyro modernRoboticsI2cGyro;
+    IntegratingGyroscope gyro1;
+    ModernRoboticsI2cGyro modernRoboticsI2cGyro1;
 
     IntegratingGyroscope gyro2;
     ModernRoboticsI2cGyro modernRoboticsI2cGyro2;
+
     //public DigitalChannel digitalTouch;
     //DigitalChannel magneticLimitSwitch;  // Hardware Device Object
     //DigitalChannel magneticLimitSwitch2;
@@ -114,13 +122,15 @@ public class HardwareIhba
         frontRight = hwMap.get(DcMotor.class, "FrontRight");
         backLeft  = hwMap.get(DcMotor.class, "BackLeft");
         backRight = hwMap.get(DcMotor.class, "BackRight");
-        //lift = hwMap.get(DcMotor.class, "Lift");
+        latch = hwMap.get(DcMotor.class, "Latch");
+        mineralLift = hwMap.get(DcMotor.class, "MineralLift");
+        intake = hwMap.get(DcMotor.class, "Intake");
 
 
-        modernRoboticsI2cGyro = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
-        gyro = (IntegratingGyroscope)modernRoboticsI2cGyro;
+        modernRoboticsI2cGyro1 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
+        gyro1 = (IntegratingGyroscope)modernRoboticsI2cGyro1;
         modernRoboticsI2cGyro2 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro2");
-        gyro2 = (IntegratingGyroscope)modernRoboticsI2cGyro;
+        gyro2 = (IntegratingGyroscope)modernRoboticsI2cGyro2;
 
 //        magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
 //        magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
@@ -129,18 +139,22 @@ public class HardwareIhba
 //        magneticLimitSwitch2.setMode(DigitalChannel.Mode.INPUT);
 
 
-        frontLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors/
-        frontRight.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        backLeft.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        backRight.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors/
-        //lift.setDirection(DcMotor.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors/
+        frontRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
+        backLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
+        backRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors/
+        latch.setDirection(DcMotor.Direction.REVERSE);
+        mineralLift.setDirection(DcMotor.Direction.FORWARD);
+        intake.setDirection(DcMotor.Direction.FORWARD);
 
         // Set all motors to zero power
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
-        //lift.setPower(0);
+        latch.setPower(0);
+        mineralLift.setPower(0);
+        intake.setPower(0);
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
@@ -148,7 +162,9 @@ public class HardwareIhba
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mineralLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);   // is this going to use an encoder?
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize ALL installed servos.
 
@@ -163,42 +179,43 @@ public class HardwareIhba
 
 
         // Set up detector
-        samplingDetector = new SamplingOrderDetector(); // Create the detector
-        samplingDetector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize detector with app context and camera
-        samplingDetector.useDefaults(); // Set detector to use default settings
-
-        samplingDetector.downscale = 0.4; // How much to downscale the input frames
-
-        // Optional tuning
-        samplingDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
-        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-        samplingDetector.maxAreaScorer.weight = 0.001;
-
-        samplingDetector.ratioScorer.weight = 15;
-        samplingDetector.ratioScorer.perfectRatio = 1.0;
-
-        samplingDetector.enable(); // Start detector
+//        samplingDetector = new SamplingOrderDetector(); // Create the detector
+//        samplingDetector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize detector with app context and camera
+//        samplingDetector.useDefaults(); // Set detector to use default settings
+//
+//        samplingDetector.downscale = 0.4; // How much to downscale the input frames
+//
+//        // Optional tuning
+//        samplingDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+//        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+//        samplingDetector.maxAreaScorer.weight = 0.001;
+//
+//        samplingDetector.ratioScorer.weight = 15;
+//        samplingDetector.ratioScorer.perfectRatio = 1.0;
+//
+//        samplingDetector.enable(); // Start detector
 
 
 
         // Set up detector
-//        alignDetector = new GoldAlignDetector(); // Create detector
-//        alignDetector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
-//        alignDetector.useDefaults(); // Set detector to use default settings
-//        // Optional tuning
-//        alignDetector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
-//        alignDetector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
-//        alignDetector.downscale = 0.4; // How much to downscale the input frames
-//
-//        alignDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
-//        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
-//        alignDetector.maxAreaScorer.weight = 0.005; //
-//
-//        alignDetector.ratioScorer.weight = 5; //
-//        alignDetector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
-//
-//        alignDetector.enable(); // Start the detector!
+        alignDetector = new GoldAlignDetector(); // Create detector
+        alignDetector.init(hwMap.appContext, CameraViewDisplay.getInstance()); // Initialize it with the app context and camera
+        alignDetector.useDefaults(); // Set detector to use default settings
+        // Optional tuning
+        alignDetector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        alignDetector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        alignDetector.downscale = 0.4; // How much to downscale the input frames
+
+        alignDetector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+        alignDetector.maxAreaScorer.weight = 0.005; //
+
+        alignDetector.ratioScorer.weight = 5; //
+        alignDetector.ratioScorer.perfectRatio = 1.0; // Ratio adjustment
+
+        alignDetector.enable(); // Start the detector!
     }
+
  }
 
  /* stuff to do in order of importance
@@ -213,4 +230,6 @@ public class HardwareIhba
  - ConceptRampMotorSpeed
  - lerp / accelerate motors when starting motion
 
+
+ - Odometry wheels
 */

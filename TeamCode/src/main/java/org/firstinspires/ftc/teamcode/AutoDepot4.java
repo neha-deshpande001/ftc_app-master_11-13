@@ -29,9 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -41,18 +39,18 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
 /**
- * Created by Neha Deshpande, FTC 12116 on 12/9/2018.
+ * Created by Neha Deshpande, FTC 12116 on 1/28/2019.
  */
-@Autonomous(name="3.0 Depot", group="Neha")
-@Disabled
-public class AutoDepot3 extends LinearOpMode {
+@Autonomous(name="4.0 Depot", group="Neha")
+// @Disabled
+public class AutoDepot4 extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareIhba robot = new HardwareIhba();   // Use a Pushbot's hardware
     private ElapsedTime     runtime = new ElapsedTime();
 
 
-    static final double COUNTS_PER_MOTOR_REV = 560;    // eg: TETRIX Motor Encoder
+    static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
     static final double WHEEL_DIAMETER_INCHES = 4.0;         // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -60,26 +58,20 @@ public class AutoDepot3 extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.07;
-    static final double     TURN_SPEED              = 0.07;
-    static final double     SLOW_STRAFE_SPEED       = 0.3;
-    static final double     STRAFE_SPEED            = 0.2;
-
+    static final double     DRIVE_SPEED             = 0.5;
+    static final double     TURN_SPEED              = 0.5;
+    static final double     SLOW_TURN_SPEED         = 0.3;
+    static final double     STRAFE_SPEED            = 0.3;
 
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
 
-    static final double MARKER_RETRACTED = 0.45;
-    static final double MARKER_EXTENDED = 0.9;
-
-    double color_num = 3; // 3 = blue, 10 = red
-    double current_distance_from_wall = -1;
     double currentAngle = 0;
 
     String goldlocation = "UNKNOWN";
     double holdTime = 0.5;
-    int mineralAngle = 45;
+    int workingGyro = 1;
 
 
     @Override
@@ -127,7 +119,7 @@ public class AutoDepot3 extends LinearOpMode {
 
         // Wait for the game to start (Display Gyro value), and reset gyro before we move.
         while (!isStarted() && !isStopRequested()) {
-            telemetry.addData(">", "Robot Heading = %d", robot.modernRoboticsI2cGyro1.getIntegratedZValue());
+            telemetry.addData(">", "Robot Heading 1 = %d", robot.modernRoboticsI2cGyro1.getIntegratedZValue());
             telemetry.update();
             telemetry.addData(">", "Robot Heading 2 = %d", robot.modernRoboticsI2cGyro2.getIntegratedZValue());
             telemetry.update();
@@ -152,172 +144,99 @@ public class AutoDepot3 extends LinearOpMode {
         // LEFT MEANS THE ROBOT'S LEFT
         //robot.samplingDetector.disable();
 
-        unlatch();
+        unlatch(36);
 
         sleep(500);
 
-        encoderDrive(DRIVE_SPEED,10,10,1);
-        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
+        //move from latched state
+        gyroDrive(DRIVE_SPEED,12,currentAngle);
+
+        // turn to the right
+        currentAngle = -45;
+        gyroTurn(TURN_SPEED, currentAngle);
+        gyroHold(TURN_SPEED, currentAngle,holdTime);
 
         sleep(500);
 
-        currentAngle = 35;
-        gyroTurn(DRIVE_SPEED,currentAngle);
-        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-
-        sleep(500);
-
+        //turn left until aligned with the mineral
         while(opModeIsActive() && !robot.alignDetector.getAligned()){
-                robot.frontRight.setPower(-0.03);
-                robot.backRight.setPower(-0.03);
-                robot.frontLeft.setPower(0.03);
-                robot.backLeft.setPower(0.03);
+            robot.frontRight.setPower(SLOW_TURN_SPEED);
+            robot.backRight.setPower(SLOW_TURN_SPEED);
+            robot.frontLeft.setPower(-SLOW_TURN_SPEED);
+            robot.backLeft.setPower(-SLOW_TURN_SPEED);
         }
         robot.frontLeft.setPower(0);
         robot.frontRight.setPower(0);
         robot.backLeft.setPower(0);
         robot.backRight.setPower(0);
-        //at this point, robot is facing mineral
         sleep(500);
 
-        currentAngle = robot.modernRoboticsI2cGyro1.getHeading();
+        if (workingGyro == 1)
+            currentAngle = robot.modernRoboticsI2cGyro1.getIntegratedZValue();
+        else
+            currentAngle = robot.modernRoboticsI2cGyro2.getIntegratedZValue();
 
-        for(int i = 0; i < 3;i++) {
-            runtime.reset();
-            while (runtime.seconds() < 0.7) {
-                robot.frontRight.setPower(0.2);
-                robot.backRight.setPower(0.2);
-                robot.frontLeft.setPower(0.1);
-                robot.backLeft.setPower(0.1);
-            }
-            robot.frontLeft.setPower(0);
-            robot.frontRight.setPower(0);
-            robot.backLeft.setPower(0);
-            robot.backRight.setPower(0);
-            sleep(100);
-        }
-        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-        for(int i = 0; i < 2;i++) {
-            runtime.reset();
-            while (runtime.seconds() < 0.7) {
-                robot.frontRight.setPower(0.3);
-                robot.backRight.setPower(0.3);
-                robot.frontLeft.setPower(0.2);
-                robot.backLeft.setPower(0.2);
-            }
-            robot.frontLeft.setPower(0);
-            robot.frontRight.setPower(0);
-            robot.backLeft.setPower(0);
-            robot.backRight.setPower(0);
-            sleep(100);
-        }
-        robot.frontLeft.setPower(0);
-        robot.frontRight.setPower(0);
-        robot.backLeft.setPower(0);
-        robot.backRight.setPower(0);
+//        // I'm not sure if this will work because the angular velocity would be 0 if the robot is perfectly still
+//        // a way to fix this is to see if it worked in the past when we used gyroDrive
+//        // although the gyro might have disconnected while turning... although difficult because slow moving while turning
+//        AngularVelocity rates = robot.gyro1.getAngularVelocity(AngleUnit.DEGREES);
+//        if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
+//            currentAngle = robot.modernRoboticsI2cGyro1.getIntegratedZValue();
+//            telemetry.addData(">","first gyro");
+//            telemetry.update();
+//        }
+//        else{
+//            currentAngle = robot.modernRoboticsI2cGyro2.getIntegratedZValue();
+//            telemetry.addData(">","backup gyro");
+//            telemetry.update();
+//        }
+        gyroHold(TURN_SPEED,currentAngle,holdTime);
 
-
-        if (currentAngle > 15){
-            gyroTurn(TURN_SPEED,-45);
-            gyroHold(TURN_SPEED,-45,holdTime);
-        }
-        else if (currentAngle < -15){
-            gyroTurn(TURN_SPEED,45);
-            gyroHold(TURN_SPEED,45,holdTime);
-        }
-        else{
-            gyroTurn(TURN_SPEED,0);
-            gyroHold(TURN_SPEED,0,holdTime);
-        }
-
-        runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) { }
-        runtime.reset();
-        robot.dump.setPower(-1);
-        while (opModeIsActive() && runtime.seconds() < 0.5) { }
-        runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) {
-        }
-
-        for(int i = 0; i < 1;i++) {
-            runtime.reset();
-            while (runtime.seconds() < 0.5) {
-                robot.frontRight.setPower(-0.3);
-                robot.backRight.setPower(-0.3);
-                robot.frontLeft.setPower(-0.2);
-                robot.backLeft.setPower(-0.2);
-            }
-            robot.frontLeft.setPower(0);
-            robot.frontRight.setPower(0);
-            robot.backLeft.setPower(0);
-            robot.backRight.setPower(0);
-            sleep(100);
-        }
-
-        //remove marker
+        //at this point, robot is facing mineral
 
         //knock off mineral
-//        encoderDrive(DRIVE_SPEED,100,100,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//
-//        sleep(250);
+        gyroDrive(DRIVE_SPEED, 12, currentAngle);
+
+        //move back to original spot
+        gyroDrive(DRIVE_SPEED,-12,currentAngle);
+
+        //turn to 90
+        currentAngle = 90;
+        gyroTurn(TURN_SPEED,currentAngle);
+        gyroHold(TURN_SPEED,currentAngle,holdTime);
+
+        //for now, go to wall with encoders. Maybe later, use andymark ultrasonic sensor or range sensor
+        gyroDrive(DRIVE_SPEED,40,currentAngle);
+
+        //face crater
+        currentAngle = 135;
+        gyroTurn(TURN_SPEED,currentAngle);
+        gyroHold(TURN_SPEED,currentAngle,holdTime);
+
+        // move backwards to depot
+        gyroDrive(DRIVE_SPEED,50,currentAngle);
+
+        //release marker
+        removeMarker();
+
+        //move inside crater
+        gyroDrive(DRIVE_SPEED,75,currentAngle);
 
 
-
-//        //come back
-//        encoderDrive(DRIVE_SPEED,33,33,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//
-//        // turn facing depot
-//        currentAngle = 0;
-//        gyroTurn(TURN_SPEED,currentAngle);
-//        gyroHold(TURN_SPEED,currentAngle,holdTime);
-//
-//        //move forwards
-//        encoderDrive(DRIVE_SPEED,15,15,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//        //remove marker
-//        removeMarker();
-//
-//        //move back
-//        encoderDrive(DRIVE_SPEED,-15,-15,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//
-//        //turn towards crater
-//        currentAngle = 45;
-//        gyroTurn(TURN_SPEED,currentAngle);
-//        gyroHold(TURN_SPEED,currentAngle,holdTime);
-//
-//        // move forwards
-//        encoderDrive(DRIVE_SPEED,-33,-33,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//
-//        //turn again
-//        currentAngle = 135;
-//        gyroTurn(TURN_SPEED,currentAngle);
-//        gyroHold(TURN_SPEED,currentAngle,holdTime);
-//
-//        //move into crater
-//        encoderDrive(DRIVE_SPEED,99,99,1.5);
-//        gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-//
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
 
     }
 
-    public void unlatch() throws InterruptedException{
+    public void unlatch(double rotations) throws InterruptedException{
         //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
         int newLatchTarget;
-        int rotations = 36;
+
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
-
             // Determine new target position, and pass to motor controller
-            newLatchTarget = robot.latch.getCurrentPosition() - (int)(rotations * COUNTS_PER_MOTOR_REV);
+            newLatchTarget = robot.latch.getCurrentPosition() - (int)(rotations * robot.twentyMotorClicks);
             robot.latch.setTargetPosition(newLatchTarget);
 
             // Turn On RUN_TO_POSITION
@@ -350,15 +269,6 @@ public class AutoDepot3 extends LinearOpMode {
             // Turn off RUN_TO_POSITION
             robot.latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            sleep(250);   // optional pause after each move
-
-            encoderStrafeLeft(0.2,1,1);
-            gyroHold(0.2,currentAngle, holdTime);
-            encoderStrafeLeft(0.2,1,1);
-            gyroHold(0.2,currentAngle, holdTime);
-
-//            gyroDrive(DRIVE_SPEED,5,currentAngle);
-//            gyroHold(DRIVE_SPEED,currentAngle,0.25);
         }
     }
 
@@ -433,121 +343,22 @@ public class AutoDepot3 extends LinearOpMode {
             //  sleep(250);   // optional pause after each move
         }
     }
-    public void leftMineral() throws InterruptedException{
-        // robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
-
-        //face mineral
-        currentAngle = 45;
-        gyroTurn(TURN_SPEED,currentAngle);
-        gyroHold(TURN_SPEED,currentAngle,0.5);
-
-        //knock off mineral
-        gyroDrive(DRIVE_SPEED,33, currentAngle);
-
-    }
-
-    public void centerMineral() throws InterruptedException{
-
-        // robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.GRAY);
-
-        // knock off mineral
-        gyroDrive(DRIVE_SPEED,33,currentAngle);
-
-        removeMarker();
-
-    }
-
-    public void rightMineral() throws InterruptedException{
-        //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED_ORANGE);
-
-        // face mineral
-        currentAngle = -45;
-        gyroTurn(TURN_SPEED,currentAngle);
-        gyroHold(TURN_SPEED,currentAngle,0.5);
-
-
-        // knock off mineral
-        gyroDrive(DRIVE_SPEED,33,currentAngle);
-
-        // face depot
-        currentAngle = 0;
-        gyroTurn(TURN_SPEED,currentAngle);
-        gyroHold(TURN_SPEED,currentAngle,0.5);
-
-        removeMarker();
-
-
-    }
 
     public void removeMarker() throws InterruptedException{
         //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
 
-//        for (int i = 0; i < 2; i++) {
-//            while (opModeIsActive() && robot.magneticLimitSwitch2.getState()) // move until false
-//                robot.marker.setPower(1);
-//            while (opModeIsActive() && !robot.magneticLimitSwitch2.getState()) // move until true
-//                robot.marker.setPower(1);
-//        }
-//        robot.marker.setPower(0);
-
-        sleep(1000);
-        robot.dump.setPower(-1);
         runtime.reset();
-        while(opModeIsActive() && runtime.seconds() < 2) { }
-        robot.dump.setPower(0);
-
-        sleep(1000);
+        robot.dump.setPower(1);
+        while (opModeIsActive() && runtime.seconds() < 1.5) { }
+        runtime.reset();
         robot.dump.setPower(-1);
-
-//        for (int i = 0; i < 2; i++) {
-//            while (opModeIsActive() && robot.magneticLimitSwitch2.getState()) // move until false
-//                robot.marker.setPower(-1);
-//            while (opModeIsActive() && !robot.magneticLimitSwitch2.getState()) // move until true
-//                robot.marker.setPower(-1);
-//        }
-//        robot.marker.setPower(0);
-
-//        for (int i = 0; i < 2; i++) {
-//            sleep(1000);
-//            robot.dump.setPower(-1);
-//            runtime.reset();
-//            while(opModeIsActive() && runtime.seconds() < 2) { }
-//            robot.dump.setPower(0);
-//        }
-        sleep(1000);
-
-        //   robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
-
-        //sleep(1000);
-
-//        robot.dump.setPower(1);
-//        runtime.reset();
-//        while(opModeIsActive() && runtime.seconds() < 3) { }
-//        robot.dump.setPower(0);
-
-//        for (int i = 0; i < 2; i++) {
-//            while (opModeIsActive() && robot.magneticLimitSwitch2.getState()) // move until false
-//                robot.marker.setPower(-1);
-//            while (opModeIsActive() && !robot.magneticLimitSwitch2.getState()) // move until true
-//                robot.marker.setPower(-1);
-//        }
-//        robot.marker.setPower(0);
-
+        while (opModeIsActive() && runtime.seconds() < 0.5) { }
+        runtime.reset();
+        robot.dump.setPower(1);
+        while (opModeIsActive() && runtime.seconds() < 1.5) {
+        }
     }
 
-
-    public void driveTime(double seconds, double power) throws InterruptedException{
-        robot.frontRight.setPower(power+0.12);
-        robot.frontLeft.setPower(power);
-        robot.backLeft.setPower(power);
-        robot.backRight.setPower(power +0.12);
-        runtime.reset();
-        while(opModeIsActive() && runtime.seconds() < seconds){}
-        robot.frontRight.setPower(0);
-        robot.frontLeft.setPower(0);
-        robot.backLeft.setPower(0);
-        robot.backRight.setPower(0);
-    }
 
     public void encoderStrafeLeft(double speed, double revolutions, double timeoutS) throws InterruptedException{
 
@@ -804,12 +615,14 @@ public class AutoDepot3 extends LinearOpMode {
 
         if (!(formatRate(rates.xRotationRate).equals("0.000") && formatRate(rates.yRotationRate).equals("0.000") && formatRate(rates.zRotationRate).equals("0.000"))){
             robotError = targetAngle - robot.modernRoboticsI2cGyro1.getIntegratedZValue();
+            workingGyro = 1;
             telemetry.addData(">","first gyro");
             telemetry.update();
         }
         else{
             robotError = targetAngle - robot.modernRoboticsI2cGyro2.getIntegratedZValue();
-            telemetry.addData(">","backup");
+            workingGyro = 2;
+            telemetry.addData(">","backup gyro");
             telemetry.update();
         }
         while (robotError > 180) robotError -= 360;

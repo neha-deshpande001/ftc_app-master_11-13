@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -49,7 +50,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 @TeleOp(name="Single Controller", group="Neha")
-// @Disabled
+@Disabled
 public class SingleController extends LinearOpMode {
 
     final double    CLAW_SPEED      = 0.02 ;                   // sets rate to move servo
@@ -122,11 +123,11 @@ public class SingleController extends LinearOpMode {
                 robot.latch.setPower(0);
 
             if (!gamepad1.b && !gamepad1.x)
-                robot.dump.setPower(0);
+                robot.marker.setPower(0);
             if (gamepad1.b)
-                robot.dump.setPower(1);
+                robot.marker.setPower(1);
             if (gamepad1.x)
-                robot.dump.setPower(-1);
+                robot.marker.setPower(-1);
 
 
 //            if (gamepad1.left_stick_x == 0 && gamepad1.left_stick_y == 0 && gamepad1.right_stick_y == 0 &&

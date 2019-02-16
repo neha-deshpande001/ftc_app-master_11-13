@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -41,7 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 /**
  * Created by Neha Deshpande, FTC 12116 on 1/28/2019.
  */
-@Autonomous(name="4.0 Crater", group="Neha")
+@Autonomous(name="Crater", group="Neha")
 // @Disabled
 public class AutoCrater4 extends LinearOpMode {
 
@@ -58,9 +59,9 @@ public class AutoCrater4 extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.5;
-    static final double     TURN_SPEED              = 0.5;
-    static final double     SLOW_TURN_SPEED         = 0.3;
+    static final double     DRIVE_SPEED             = 1;
+    static final double     TURN_SPEED              = 1;
+    static final double     SLOW_TURN_SPEED         = 0.4;
     static final double     STRAFE_SPEED            = 0.3;
 
     static final double HEADING_THRESHOLD = 1;      // As tight as we can make it with an integer gyro
@@ -144,12 +145,13 @@ public class AutoCrater4 extends LinearOpMode {
         // LEFT MEANS THE ROBOT'S LEFT
         //robot.samplingDetector.disable();
 
-        unlatch(36);
+        unlatch();
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
 
         sleep(500);
 
         //move from latched state
-        gyroDrive(DRIVE_SPEED,12,currentAngle);
+        gyroDrive(0.6,12,currentAngle);
 
         // turn to the right
         currentAngle = -45;
@@ -169,6 +171,8 @@ public class AutoCrater4 extends LinearOpMode {
         robot.frontRight.setPower(0);
         robot.backLeft.setPower(0);
         robot.backRight.setPower(0);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+        robot.alignDetector.disable();
         sleep(500);
 
         if (workingGyro == 1)
@@ -195,34 +199,38 @@ public class AutoCrater4 extends LinearOpMode {
         //at this point, robot is facing mineral
 
         //knock off mineral
-        gyroDrive(DRIVE_SPEED, 12, currentAngle);
+        gyroDrive(DRIVE_SPEED, 20, currentAngle);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_GREEN);
 
         //move back to original spot
-        gyroDrive(DRIVE_SPEED,-12,currentAngle);
+        gyroDrive(DRIVE_SPEED,-20,currentAngle);
 
         //turn to 90
-        currentAngle = 90;
+        currentAngle = 88;
         gyroTurn(TURN_SPEED,currentAngle);
         gyroHold(TURN_SPEED,currentAngle,holdTime);
 
         //for now, go to wall with encoders. Maybe later, use andymark ultrasonic sensor or range sensor
-        gyroDrive(DRIVE_SPEED,40,currentAngle);
+        gyroDrive(DRIVE_SPEED,50,currentAngle);
 
         //face depot
-        currentAngle = 135;
+        currentAngle = 132;
         gyroTurn(TURN_SPEED,currentAngle);
         gyroHold(TURN_SPEED,currentAngle,holdTime);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
 
-        //move to depot
-        gyroDrive(DRIVE_SPEED,50,currentAngle);
+        //move forwards to depot
+        gyroDrive(DRIVE_SPEED,32,currentAngle);
 
         //release marker
         removeMarker();
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK);
 
-        //move inside crater
-        currentAngle = currentAngle - 3;
+        //move backwards inside crater
+        currentAngle = currentAngle + 4;
         gyroHold(DRIVE_SPEED,currentAngle,holdTime);
-        gyroDrive(DRIVE_SPEED,-75,currentAngle);
+        gyroDrive(DRIVE_SPEED,-68,currentAngle);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
 
 
         telemetry.addData("Path", "Complete");
@@ -230,49 +238,19 @@ public class AutoCrater4 extends LinearOpMode {
 
     }
 
-    public void unlatch(double rotations) throws InterruptedException{
-        //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
-        int newLatchTarget;
-
-        // Ensure that the opmode is still active
-        if (opModeIsActive()) {
-            // Determine new target position, and pass to motor controller
-            newLatchTarget = robot.latch.getCurrentPosition() - (int)(rotations * robot.twentyMotorClicks);
-            robot.latch.setTargetPosition(newLatchTarget);
-
-            // Turn On RUN_TO_POSITION
-            robot.latch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // reset the timeout time and start motion.
-            runtime.reset();
-            robot.latch.setPower(-1);
-
-            // keep looping while we are still active, and there is time left, and both motors are running.
-            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
-            // always end the motion as soon as possible.
-            // However, if you require that BOTH motors have finished their moves before the robot continues
-            // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            while (opModeIsActive() &&
-                    (runtime.seconds() < 15) &&
-                    (robot.latch.isBusy())) {
-
-                // Display it for the driver.
-                telemetry.addData("Path1",  "Running to %7d", robot.latch.getTargetPosition());
-                telemetry.addData("Path2",  "Running at %7d",
-                        robot.latch.getCurrentPosition());
-                telemetry.update();
+    public void unlatch() throws InterruptedException {
+        runtime.reset();
+        while (runtime.seconds() < 3.5) {
+            for (int i = 0; i < 2; i++) {
+                while (opModeIsActive() && !robot.magneticLimitSwitch.getState()) // move until true
+                    robot.latch.setPower(-0.3);
+                while (opModeIsActive() && robot.magneticLimitSwitch.getState()) // move until false
+                    robot.latch.setPower(-0.7);
             }
-
-            // Stop all motion;
-            robot.latch.setPower(0);
-
-            // Turn off RUN_TO_POSITION
-            robot.latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+            break;
         }
+        robot.latch.setPower(0);
     }
-
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
@@ -345,20 +323,12 @@ public class AutoCrater4 extends LinearOpMode {
         }
     }
     public void removeMarker() throws InterruptedException{
-        //  robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
 
         runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) { }
-        runtime.reset();
-        robot.dump.setPower(-1);
-        while (opModeIsActive() && runtime.seconds() < 0.5) { }
-        runtime.reset();
-        robot.dump.setPower(1);
-        while (opModeIsActive() && runtime.seconds() < 1.5) {
-        }
+        robot.marker.setPower(-1);
+        while (opModeIsActive() && runtime.seconds() < 2.25) { }
     }
-
     public void encoderStrafeLeft(double speed, double revolutions, double timeoutS) throws InterruptedException{
 
         int newFrontLeftTarget = robot.frontLeft.getCurrentPosition() - (int)(revolutions * COUNTS_PER_MOTOR_REV);

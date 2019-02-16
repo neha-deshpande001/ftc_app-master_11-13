@@ -77,10 +77,10 @@ public class DoubleController extends LinearOpMode {
         gamepad[0] = gamepad1;
         gamepad[1] = gamepad2;
 
-        //robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
+        robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_LAVA_PALETTE);
 
         // Send telemetry message to signify robot waiting;
-        telemetry.addData("Say", "\"Which idiot wrote the documentation for this code?\nI have no idea what I'm doing\"\n- Ihba");
+        telemetry.addData("Say", "If you have a spring in your step, you might be a robot!");
         telemetry.update();
         // How many robots does it take in to screw in a lightbulb? 7/1/18
         // Can we remove the plexiglass panels again? 11/10/18
@@ -88,6 +88,8 @@ public class DoubleController extends LinearOpMode {
         // "I'm lit, get it?" - Ihba 11/28/18
         // Which idiot wrote the documentation for this code? I have no idea what I'm doing - Ihba 12/27/18
         // Write a notebook entry instead of reading this
+        // If you have a spring in your step, you might be a robot.
+
 
         // Wait for the game to start (driver presses PLAY)
         robot.frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -95,20 +97,20 @@ public class DoubleController extends LinearOpMode {
         robot.backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        telemetry.addData("Say", "A for single, B for double"); // driver can choose the gamepad
-        telemetry.update();
+//        telemetry.addData("Say", "A for single, B for double"); // driver can choose the gamepad
+//        telemetry.update();
 
         while (!isStopRequested() && !isStarted())  {
-            if (gamepad1.a || gamepad2.a) {
-                telemetry.addData("Say", "1: you chose single controller");
-                telemetry.update();
-                chosen = 0;
-            }
-            else if (gamepad1.b || gamepad2.b) {
-                telemetry.addData("Say", "2: you chose double controller");
-                telemetry.update();
-                chosen = 1;
-            }
+//            if (gamepad1.a || gamepad2.a) {
+//                telemetry.addData("Say", "1: you chose single controller");
+//                telemetry.update();
+//                chosen = 0;
+//            }
+//            else if (gamepad1.b || gamepad2.b) {
+//                telemetry.addData("Say", "2: you chose double controller");
+//                telemetry.update();
+//                chosen = 1;
+//            }
         }
 
         runtime.reset();
@@ -116,6 +118,7 @@ public class DoubleController extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
+            robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.TWINKLES_PARTY_PALETTE);
 
             // Convert joysticks to desired motion
             Mecanum.Motion motion = Mecanum.joystickToMotion(
@@ -129,28 +132,63 @@ public class DoubleController extends LinearOpMode {
             robot.backLeft.setPower(wheels.backLeft);
             robot.backRight.setPower(wheels.backRight);
 
+            if (runtime.seconds() > 90)
+                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_RED);
+
+
+            // latch up and down
             if (!gamepad[chosen].dpad_up && !gamepad[chosen].dpad_down)
                 robot.latch.setPower(0);
             else if (gamepad[chosen].dpad_down)
                 robot.latch.setPower(1);
-            else if (gamepad[chosen].dpad_up)
+            else if (gamepad[chosen].dpad_up) {
                 robot.latch.setPower(-1);
+                if (runtime.seconds() > 90)
+                    robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE_GREEN);
 
-            if (!gamepad[chosen].right_bumper && !gamepad[chosen].left_bumper)
-                robot.dump.setPower(0);
-            if (gamepad[chosen].right_bumper)
-                robot.dump.setPower(1);
-            if (gamepad[chosen].left_bumper)
-                robot.dump.setPower(-1);
+            }
 
-            if (gamepad[chosen].a)
-                latch();
-            if (gamepad[chosen].y)
-                unlatch();
+            if (robot.magneticLimitSwitch.getState())
+                robot.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
+            if (!gamepad[chosen].x && !gamepad[chosen].y)
+                robot.marker.setPower(0);
             if (gamepad[chosen].x)
-                robot.latch.setPower(0);
+                robot.marker.setPower(1);
+            if (gamepad[chosen].y)
+                robot.marker.setPower(-1);
 
+
+
+            if (!gamepad[chosen].dpad_right && !gamepad[chosen].dpad_left)
+                robot.extension.setPower(0);
+            if (gamepad[chosen].dpad_right)
+                robot.extension.setPower(1);
+            if (gamepad[chosen].dpad_left)
+                robot.extension.setPower(-1);
+
+
+            if (!gamepad[chosen].left_bumper && !gamepad[chosen].right_bumper)
+                robot.arm.setPower(0);
+            else if (gamepad[chosen].left_bumper)
+                robot.arm.setPower(1);
+            else if (gamepad[chosen].right_bumper)
+                robot.arm.setPower(-1);
+
+            if (!gamepad[chosen].a && !gamepad[chosen].b && !gamepad1.b && !gamepad1.a)
+                robot.intake.setPower(0);
+            if (gamepad[chosen].a || gamepad1.a)
+                robot.intake.setPower(1);
+            if (gamepad[chosen].b || gamepad1.b)
+                robot.intake.setPower(-1);
+
+//            if (gamepad1.a)
+//                latch();
+//            if (gamepad1.y)
+//                unlatch();
+//
+//            if (gamepad1.x)
+//                robot.latch.setPower(0);
 
 
 

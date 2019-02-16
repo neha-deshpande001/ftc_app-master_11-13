@@ -84,7 +84,8 @@ public class HardwareIhba
     public DcMotor  backRight   = null;
     public DcMotor  latch       = null;
     
-    public DcMotor  mineralLift = null;
+    public DcMotor  arm         = null;
+    public DcMotor  extension   = null;
     public DcMotor  intake      = null;
 
     //ModernRoboticsI2cRangeSensor range;
@@ -95,14 +96,14 @@ public class HardwareIhba
     ModernRoboticsI2cGyro modernRoboticsI2cGyro2;
 
     //public DigitalChannel digitalTouch;
-    //DigitalChannel magneticLimitSwitch;  // Hardware Device Object
+    DigitalChannel magneticLimitSwitch;  // Hardware Device Object
     //DigitalChannel magneticLimitSwitch2;
 
-    //public CRServo marker = null;
-    public CRServo dump = null;
+    public CRServo marker = null;
+   // public CRServo intake = null;
 ////      rjberry@rjcontrol.com
 //
-    //RevBlinkinLedDriver blinkinLedDriver;
+    RevBlinkinLedDriver blinkinLedDriver;
 
 
     /* local OpMode members. */
@@ -123,17 +124,17 @@ public class HardwareIhba
         backLeft  = hwMap.get(DcMotor.class, "BackLeft");
         backRight = hwMap.get(DcMotor.class, "BackRight");
         latch = hwMap.get(DcMotor.class, "Latch");
-        mineralLift = hwMap.get(DcMotor.class, "MineralLift");
+        arm = hwMap.get(DcMotor.class, "Arm");
+        extension = hwMap.get(DcMotor.class,"Extension");
         intake = hwMap.get(DcMotor.class, "Intake");
-
 
         modernRoboticsI2cGyro1 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro");
         gyro1 = (IntegratingGyroscope)modernRoboticsI2cGyro1;
         modernRoboticsI2cGyro2 = hwMap.get(ModernRoboticsI2cGyro.class, "Gyro2");
         gyro2 = (IntegratingGyroscope)modernRoboticsI2cGyro2;
 
-//        magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
-//        magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
+        magneticLimitSwitch = hwMap.get(DigitalChannel.class, "sensor_digital");
+        magneticLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
 //
 //        magneticLimitSwitch2 = hwMap.get(DigitalChannel.class, "sensor_digital2");
 //        magneticLimitSwitch2.setMode(DigitalChannel.Mode.INPUT);
@@ -144,7 +145,8 @@ public class HardwareIhba
         backLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         backRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors/
         latch.setDirection(DcMotor.Direction.REVERSE);
-        mineralLift.setDirection(DcMotor.Direction.FORWARD);
+        arm.setDirection(DcMotor.Direction.FORWARD);
+        extension.setDirection(DcMotor.Direction.FORWARD);
         intake.setDirection(DcMotor.Direction.FORWARD);
 
         // Set all motors to zero power
@@ -153,7 +155,8 @@ public class HardwareIhba
         backLeft.setPower(0);
         backRight.setPower(0);
         latch.setPower(0);
-        mineralLift.setPower(0);
+        arm.setPower(0);
+        extension.setPower(0);
         intake.setPower(0);
 
         // Set all motors to run without encoders.
@@ -163,7 +166,8 @@ public class HardwareIhba
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         latch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mineralLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);   // is this going to use an encoder?
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);   // is this going to use an encoder?
+        extension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize ALL installed servos.
@@ -171,12 +175,15 @@ public class HardwareIhba
 
 //        marker = hwMap.get(CRServo.class ,"Marker");
 //        marker.setPower(0);
-        dump = hwMap.get(CRServo.class,"Dump");
-        dump.setPower(0);
-//
-//        blinkinLedDriver = hwMap.get(RevBlinkinLedDriver.class, "blinkin");
-//        blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_GRAY);    // change color if necessary
+        marker = hwMap.get(CRServo.class,"Marker");
+        marker.setPower(0);
+//        intake = hwMap.get(CRServo.class, "Intake");
+//        intake.setPower(0);
 
+//a
+        blinkinLedDriver = hwMap.get(RevBlinkinLedDriver.class, "blinkin");
+        blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_GRAY);    // change color if necessary
+//
 
         // Set up detector
 //        samplingDetector = new SamplingOrderDetector(); // Create the detector

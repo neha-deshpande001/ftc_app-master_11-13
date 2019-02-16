@@ -48,7 +48,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 @Autonomous(name = "Edited: Concept: Ramp Motor Speed", group = "Concept")
-// @Disabled
+@Disabled
 public class ConceptRampMotorSpeed extends LinearOpMode {
 
     HardwareIhba robot = new HardwareIhba();

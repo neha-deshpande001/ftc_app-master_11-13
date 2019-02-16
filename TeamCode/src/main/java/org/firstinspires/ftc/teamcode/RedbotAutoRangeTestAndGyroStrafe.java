@@ -74,7 +74,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  */
 
 @Autonomous(name="Range Test", group="Neha")
-// @Disabled
+@Disabled
 public class RedbotAutoRangeTestAndGyroStrafe extends LinearOpMode {
 
     /* Declare OpMode members. */

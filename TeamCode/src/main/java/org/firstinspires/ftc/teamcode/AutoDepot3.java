@@ -231,13 +231,13 @@ public class AutoDepot3 extends LinearOpMode {
         }
 
         runtime.reset();
-        robot.dump.setPower(1);
+        robot.marker.setPower(1);
         while (opModeIsActive() && runtime.seconds() < 1.5) { }
         runtime.reset();
-        robot.dump.setPower(-1);
+        robot.marker.setPower(-1);
         while (opModeIsActive() && runtime.seconds() < 0.5) { }
         runtime.reset();
-        robot.dump.setPower(1);
+        robot.marker.setPower(1);
         while (opModeIsActive() && runtime.seconds() < 1.5) {
         }
 
@@ -491,13 +491,13 @@ public class AutoDepot3 extends LinearOpMode {
 //        robot.marker.setPower(0);
 
         sleep(1000);
-        robot.dump.setPower(-1);
+        robot.marker.setPower(-1);
         runtime.reset();
         while(opModeIsActive() && runtime.seconds() < 2) { }
-        robot.dump.setPower(0);
+        robot.marker.setPower(0);
 
         sleep(1000);
-        robot.dump.setPower(-1);
+        robot.marker.setPower(-1);
 
 //        for (int i = 0; i < 2; i++) {
 //            while (opModeIsActive() && robot.magneticLimitSwitch2.getState()) // move until false

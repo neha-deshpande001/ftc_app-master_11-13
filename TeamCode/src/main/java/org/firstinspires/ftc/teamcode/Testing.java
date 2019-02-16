@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -71,7 +72,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
  */
 
 @Autonomous(name="testing", group="Neha")
-// @Disabled
+@Disabled
 public class Testing extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -145,11 +146,11 @@ public class Testing extends LinearOpMode {
         // Put a hold after each turn
         for (int i = 0; i < 2; i++) {
             runtime.reset();
-            robot.dump.setPower(1);
+            robot.marker.setPower(1);
             while (runtime.seconds() < 2) {
             }
             runtime.reset();
-            robot.dump.setPower(-1);
+            robot.marker.setPower(-1);
             while (runtime.seconds() < 2) {
             }
         }

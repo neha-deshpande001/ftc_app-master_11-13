@@ -451,13 +451,13 @@ public class CraterAuto extends LinearOpMode {
 //        robot.marker.setPower(0);
 
         sleep(1000);
-        robot.dump.setPower(-1);
+        robot.marker.setPower(-1);
         runtime.reset();
         while(opModeIsActive() && runtime.seconds() < 2) { }
-        robot.dump.setPower(0);
+        robot.marker.setPower(0);
 
         sleep(1000);
-        robot.dump.setPower(-1);
+        robot.marker.setPower(-1);
 
 //        for (int i = 0; i < 2; i++) {
 //            while (opModeIsActive() && robot.magneticLimitSwitch2.getState()) // move until false
